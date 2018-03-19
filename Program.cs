@@ -12,28 +12,33 @@ namespace SoftwareReliability
     class Program
     {
         //Global Variables
+        static double[] component_reliabilities = {0.95, 0.8, 0.93};                    //2 out of 3
         //static double[] component_reliabilities = { 0.99, 0.995, 0.98, 0.995};        //RAMS2014
-        static double[] component_reliabilities = { 0.8, 0.75, 0.7, 0.72, 0.73 };   //Hoda's
+        //static double[] component_reliabilities = { 0.8, 0.75, 0.7, 0.72, 0.73 };   //Hoda's
         //static double[] component_reliabilities = { 0.99, 0.995, 0.98, 0.995, 0.8, 0.75, 0.7, 0.72, 0.73, 0.84 }; //10 State
-        static int number = 5;
+        static int number;
         static Matrix<double> correlations_matrix;
         static List<double> sigma = new List<double>();
         static List<int[]> CS = new List<int[]>();
+        static List<int[]> PS = new List<int[]>();
             
         static void Main(string[] args)
         {
             //Macro to build Matrix
             var M = Matrix<double>.Build;
             //Double arrays based off of column_major notation which is used to create Matrices
+            double[] correlations = {  1.00000, 0.00921, 0.01604,                     //2 out of 3
+                                       0.00921, 1.00000, 0.03902,
+                                       0.01604, 0.03902, 1.00000};
             /*double[] correlations = {1.0000, 0.0094, -0.0023, -0.0020,              //RAMS2014
                                      0.0094, 1.0000,  0.0011,  0.0010,
                                     -0.0023, 0.0011,  1.0000,  0.0010,
                                     -0.0020, 0.0010,  0.0010,  1.0000}; */
-            double[] correlations = {1.0000, -0.2800, 0.1000, -0.1500, 0.1500,    //Hoda's
+            /*double[] correlations = {1.0000, -0.2800, 0.1000, -0.1500, 0.1500,    //Hoda's
                                       -0.2800,  1.0000, 0.2000,  0.3000,-0.1500,
                                        0.1000,  0.2000, 1.0000,  0.3200, 0.5000,
                                       -0.1500,  0.3000, 0.3200,  1.0000,-0.2200,
-                                       0.1500, -0.1500, 0.5000, -0.2200, 1.0000};
+                                       0.1500, -0.1500, 0.5000, -0.2200, 1.0000};*/
             /*double[] correlations = {  1.0000,  0.2800, 0.1000, -0.0015, 0.1500, 0.0345, 0.0762, -0.0257, 0.0440, -0.0057,    //10 State
                                        0.2800,  1.0000, 0.2000,  0.3000,-0.0150, 0.0067,-0.0229,  0.0033, 0.1123,  0.0478,  
                                        0.1000,  0.2000, 1.0000,  0.3200, 0.0500,-0.0291, 0.0622,  0.0783, 0.0492, -0.0111,
@@ -46,9 +51,10 @@ namespace SoftwareReliability
                                       -0.0057,  0.0478,-0.0111,  0.0459,-0.0555, 0.0433,-0.0221,  0.0166,-0.0223,  1.0000};*/
 
             //Creating Corresponding Matrices
-            correlations_matrix = M.Dense(number, number, correlations);
+            correlations_matrix = M.Dense(3, 3, correlations);
             
-
+            CS.Clear();
+            PS.Clear();
             //10 State Cutset
             List<int[]> CS1 = new List<int[]>();
             CS1.Add(new int[] { 1, 6 });
@@ -73,21 +79,18 @@ namespace SoftwareReliability
             CS2.Add(new int[] {4,5});
             CS2.Add(new int[] {1,3,5});
             CS2.Add(new int[] {2,3,4});
-            
-
-
-            //Enumeration testing 
-            number = 5;
-            CS.Clear();
+            //2 out of 3 Cutset
+            List<int[]> CS3 = new List<int[]>();
             CS.Add(new int[] {1,2});
-            CS.Add(new int[] {4,5});
-            CS.Add(new int[] {1,3,5});
-            CS.Add(new int[] {2,3,4});
-            List<int[]> Test = new List<int[]>();
-            Test = RecursiveEnumerate(number);
+            CS.Add(new int[] {1,3});
+            CS.Add(new int[] {2,3});
+
+
+            //2 out of 3 Pathset
+            PS.Add(new int[] {1,2});
 
             //Testing
-            number = 5;
+            number = 3;
             //GenerateComponents(0.7, 0.99);
             //GenerateCorrelations(0.1);
             GenerateSigma();
@@ -106,9 +109,9 @@ namespace SoftwareReliability
             Console.WriteLine("");
 
             FindReliability(number);
-            double S5 = Simulation(1000000);
-            double S6 = Simulation(10000000);
-            S6 = 0;
+            double S = Simulation(1000000);
+            Console.WriteLine("Simulation Estimate with 1,000,000 runs: " + S.ToString("#0.00000"));
+            S = 0;
             //Hold Results on screen
             Console.ReadLine();          
             
@@ -130,9 +133,14 @@ namespace SoftwareReliability
                     Path.Add(choice);
                     if (choice == 0 && ContainsCutset(Path.ToArray()))
                         break;
+                    else if (ContainsPathset(Path.ToArray()))
+                    {
+                        success++;
+                        break;
+                    }
                 }
                 if (Path.Count == number)
-                    success += 1;
+                    success ++;
 
             }
             return (double) success / (double) runs; 
@@ -363,6 +371,26 @@ namespace SoftwareReliability
                             safe = true;
                     }
                     if (!safe)
+                        return true;
+                }
+                    
+            }
+            return false;
+        }
+        static bool ContainsPathset(int[] query)
+        {
+            bool safe;
+            foreach (int[] path in PS)            //Loop through each cutset and compare to query
+            {
+                safe = true;
+                if (query.Count() >= path.Max())     //See if check is applicable
+                {
+                    foreach (int i in path)
+                    {
+                        if (query[i - 1] != 1)
+                            safe = false;
+                    }
+                    if (safe)
                         return true;
                 }
                     
