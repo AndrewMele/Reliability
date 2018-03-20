@@ -12,9 +12,9 @@ namespace SoftwareReliability
     class Program
     {
         //Global Variables
-        static double[] component_reliabilities = {0.95, 0.8, 0.93};                    //2 out of 3
+        //static double[] component_reliabilities = {0.95, 0.8, 0.93};                    //2 out of 3
         //static double[] component_reliabilities = { 0.99, 0.995, 0.98, 0.995};        //RAMS2014
-        //static double[] component_reliabilities = { 0.8, 0.75, 0.7, 0.72, 0.73 };   //Hoda's
+        static double[] component_reliabilities = { 0.8, 0.75, 0.7, 0.72, 0.73 };   //Hoda's
         //static double[] component_reliabilities = { 0.99, 0.995, 0.98, 0.995, 0.8, 0.75, 0.7, 0.72, 0.73, 0.84 }; //10 State
         static int number;
         static Matrix<double> correlations_matrix;
@@ -27,18 +27,18 @@ namespace SoftwareReliability
             //Macro to build Matrix
             var M = Matrix<double>.Build;
             //Double arrays based off of column_major notation which is used to create Matrices
-            double[] correlations = {  1.00000, 0.00921, 0.01604,                     //2 out of 3
+            /*double[] correlations = {  1.00000, 0.00921, 0.01604,                     //2 out of 3
                                        0.00921, 1.00000, 0.03902,
-                                       0.01604, 0.03902, 1.00000};
+                                       0.01604, 0.03902, 1.00000};*/
             /*double[] correlations = {1.0000, 0.0094, -0.0023, -0.0020,              //RAMS2014
                                      0.0094, 1.0000,  0.0011,  0.0010,
                                     -0.0023, 0.0011,  1.0000,  0.0010,
                                     -0.0020, 0.0010,  0.0010,  1.0000}; */
-            /*double[] correlations = {1.0000, -0.2800, 0.1000, -0.1500, 0.1500,    //Hoda's
+            double[] correlations = {1.0000, -0.2800, 0.1000, -0.1500, 0.1500,    //Hoda's
                                       -0.2800,  1.0000, 0.2000,  0.3000,-0.1500,
                                        0.1000,  0.2000, 1.0000,  0.3200, 0.5000,
                                       -0.1500,  0.3000, 0.3200,  1.0000,-0.2200,
-                                       0.1500, -0.1500, 0.5000, -0.2200, 1.0000};*/
+                                       0.1500, -0.1500, 0.5000, -0.2200, 1.0000};
             /*double[] correlations = {  1.0000,  0.2800, 0.1000, -0.0015, 0.1500, 0.0345, 0.0762, -0.0257, 0.0440, -0.0057,    //10 State
                                        0.2800,  1.0000, 0.2000,  0.3000,-0.0150, 0.0067,-0.0229,  0.0033, 0.1123,  0.0478,  
                                        0.1000,  0.2000, 1.0000,  0.3200, 0.0500,-0.0291, 0.0622,  0.0783, 0.0492, -0.0111,
@@ -51,7 +51,7 @@ namespace SoftwareReliability
                                       -0.0057,  0.0478,-0.0111,  0.0459,-0.0555, 0.0433,-0.0221,  0.0166,-0.0223,  1.0000};*/
 
             //Creating Corresponding Matrices
-            correlations_matrix = M.Dense(3, 3, correlations);
+            correlations_matrix = M.Dense(5, 5, correlations);
             
             CS.Clear();
             PS.Clear();
@@ -75,22 +75,23 @@ namespace SoftwareReliability
             CS1.Add(new int[] { 1, 8, 9, 10 });
             //Hoda's Cutset
             List<int[]> CS2 = new List<int[]>();
-            CS2.Add(new int[] {1,2});
-            CS2.Add(new int[] {4,5});
-            CS2.Add(new int[] {1,3,5});
-            CS2.Add(new int[] {2,3,4});
+            CS.Add(new int[] {1,2});
+            CS.Add(new int[] {4,5});
+            CS.Add(new int[] {1,3,5});
+            CS.Add(new int[] {2,3,4});
             //2 out of 3 Cutset
             List<int[]> CS3 = new List<int[]>();
-            CS.Add(new int[] {1,2});
-            CS.Add(new int[] {1,3});
-            CS.Add(new int[] {2,3});
+            CS3.Add(new int[] {1,2});
+            CS3.Add(new int[] {1,3});
+            CS3.Add(new int[] {2,3});
 
 
-            //2 out of 3 Pathset
-            PS.Add(new int[] {1,2});
+            //Pathset
+            PS.Add(new int[] {1,4});
+            PS.Add(new int[] {2,3,4});
 
             //Testing
-            number = 3;
+            number = 5;
             //GenerateComponents(0.7, 0.99);
             //GenerateCorrelations(0.1);
             GenerateSigma();
