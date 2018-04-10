@@ -342,17 +342,21 @@ namespace SoftwareReliability
         static List<int[]> RecursiveEnumerate(int level, int[] counters, List<int[]> Paths)
         {
             List<int> temp_state = new List<int>();
-            
-            for (int i = 0; i < 2; i++)
+            bool pathflag;
+            for (int i = 1; i >= 0; i--)
             {
                 temp_state.Clear();
+                pathflag = false;
                 counters[level] = i;
                 for (int a = 0; a <= level; a++)
                     temp_state.Add(counters[a]);
-                if (level != counters.Length - 1 && !ContainsCutset(temp_state.ToArray()))
-                    Paths = RecursiveEnumerate(level + 1, counters, Paths);
-                if (level == counters.Length - 1 && !ContainsCutset(temp_state.ToArray()))
+                if ( (level == counters.Length - 1 && !ContainsCutset(temp_state.ToArray())) || ContainsPathset(temp_state.ToArray()))
+                {
                     Paths.Add(temp_state.ToArray());
+                    pathflag = true;
+                }
+                if (level != counters.Length - 1 && !ContainsCutset(temp_state.ToArray()) && !pathflag)
+                    Paths = RecursiveEnumerate(level + 1, counters, Paths);
             }
             return Paths;
         }
