@@ -140,7 +140,7 @@ namespace SoftwareReliability
         {
             List<int> Path = new List<int>();
             Random Rand = new Random();
-            int choice;
+            double choice;
             int success = 0;
 
             for (int i = 0; i < runs; i++)
@@ -148,9 +148,22 @@ namespace SoftwareReliability
                 Path.Clear();
                 for (int j = 0; j < number; j++)
                 {
-                    choice = Rand.Next(0,2);
-                    Path.Add(choice);
-                    if (choice == 0 && ContainsCutset(Path.ToArray()))
+                    choice = Rand.NextDouble();
+                    if (j == 0)
+                    {
+                        if (choice < component_reliabilities[0])
+                            Path.Add(1);
+                        else
+                            Path.Add(0);
+                    }
+                    else
+                    {
+                        if(choice < ConditionalProbability(Path.ToArray()))
+                            Path.Add(1);
+                        else
+                            Path.Add(0);
+                    }
+                    if (ContainsCutset(Path.ToArray()))
                         break;
                     else if (ContainsPathset(Path.ToArray()))
                     {
