@@ -21,6 +21,7 @@ namespace SoftwareReliability
         static List<double> sigma = new List<double>();
         static List<int[]> CS = new List<int[]>();
         static List<int[]> PS = new List<int[]>();
+        static List<double[]> Bm = new List<double[]>();
             
         static void Main(string[] args)
         {
@@ -108,7 +109,7 @@ namespace SoftwareReliability
                 Console.Write(correlations_array[i].ToString("#0.00000") + "  ");
             }
             Console.WriteLine("");
-
+            Generate_Bm();
             FindReliability(number);
             double S = Simulation(1000000);
             Console.WriteLine("Simulation Estimate with 1,000,000 runs: " + S.ToString("#0.00000"));
@@ -116,6 +117,23 @@ namespace SoftwareReliability
             //Hold Results on screen
             Console.ReadLine();          
             
+        }
+
+        static void Generate_Bm()
+        {
+            List<double> temp = new List<double>();
+            Bm.Clear();
+            Bm.Add(new double[] {0});
+            Bm.Add(new double[] {0});
+
+            for(int i = 2; i <= number; i++)
+            {
+                temp.Clear();
+                temp.Add(0);
+                temp.AddRange(b(i));
+                Bm.Add(temp.ToArray());
+            }
+
         }
 
         static double Simulation(int runs)
@@ -640,7 +658,7 @@ namespace SoftwareReliability
 
         //ConditionalProbability takes in an integer array which corresponds to the binary string of successes and failures and returns the appropriate probability
         //Example: 1010 = Fourth State being failure given first state was success and second state was failure and third state was success
-        static double ConditionalProbability(int[] B, bool print = false)
+       static double ConditionalProbability(int[] B, bool print = false)
         {
             double R = 0;
 
@@ -656,13 +674,13 @@ namespace SoftwareReliability
             {
                 if (B[i] == 1)
                 {
-                    R += (1 - component_reliabilities[i]) * b(B.Length, i + 1);
+                    R += (1 - component_reliabilities[i]) * Bm[B.Length][i + 1];
                     if (print)
                         Console.Write("(1 - u[" + (i+1) + "])b(" + (B.Length) + ", " + (i + 1) + ")");
                 }
                 else
                 {
-                    R += (0 - component_reliabilities[i]) * b(B.Length, i + 1);
+                    R += (0 - component_reliabilities[i]) * Bm[B.Length][i + 1];
                     if (print)
                         Console.Write("(0 - u[" + (i + 1) + "])b(" + (B.Length) + ", " + (i + 1) + ")");
                 }
@@ -727,6 +745,48 @@ namespace SoftwareReliability
             if (print)
                 Console.WriteLine("M1 Inverse Matrix * M2 Matrix:\n" + R.ToString());
             return R[j-1,0];
+            
+        }
+
+        static double[] b(int i, bool print = false)
+        {
+            //Create temporary list to make Matrices out of
+            List<double> temp = new List<double>();
+            for (int k = 0; k < i-1; k++)
+            {
+                temp.AddRange(correlations_matrix.Column(k).Take(i-1));
+            }
+            //Create First Matrix out of temp array
+            Matrix<double> M1 = Matrix<double>.Build.Dense(i - 1, i - 1, temp.ToArray());
+            if (print)
+                Console.WriteLine("M1 Matrix Before Sigma:\n" + M1.ToString());
+            //Multiply First Matrix values by the appropriate sigma values
+            for (int k = 0; k < i - 1; k++)
+                for (int h = 0; h < i - 1; h++)
+                    M1[k, h] = M1[k, h] * sigma[k] * sigma[h];
+            //Create Second Matrix (must clear temp list)
+            if (print)
+                Console.WriteLine("M1 Matrix After Sigma:\n" + M1.ToString());
+            temp.Clear();
+            temp.AddRange(correlations_matrix.Column(i - 1).Take(i - 1));
+            Matrix<double> M2;
+            M2 = Matrix<double>.Build.Dense(i - 1, 1, temp.ToArray());
+            if (print)
+                Console.WriteLine("M2 Matrix Before Sigma:\n" + M2.ToString());
+            //Multiply Second Matrix by appropriate sigma values
+            for (int k = 0; k < i - 1; k++)
+                    M2[k, 0] = M2[k, 0] * sigma[k] * sigma[i - 1];
+            //Put Results into new Matrix and return the value
+            if (print)
+            {
+                Console.WriteLine("M2 Matrix After Sigma:\n" + M2.ToString());
+                Console.WriteLine("M1 Inverse Matrix:\n" + M1.Inverse().ToString());
+            }
+            Matrix<double> R = M1.Inverse() * M2;
+            if (print)
+                Console.WriteLine("M1 Inverse Matrix * M2 Matrix:\n" + R.ToString());
+            //return R[j-1,0];
+            return R.AsColumnMajorArray();
             
         }
     }
