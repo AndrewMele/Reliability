@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -92,6 +93,9 @@ namespace SoftwareReliability
             PS.Add(new int[] {2,3,4});
 
             //Testing
+            TimingTest();
+
+
             number = 5;
             //GenerateComponents(0.7, 0.99);
             //GenerateCorrelations(0.1);
@@ -111,14 +115,106 @@ namespace SoftwareReliability
             Console.WriteLine("");
             Generate_Bm();
             FindReliability(number);
-            double S = Simulation(1000000);
-            Console.WriteLine("Simulation Estimate with 1,000,000 runs: " + S.ToString("#0.00000"));
+            double S = Simulation(1000);
+            Console.WriteLine("Simulation Estimate with 1,000 runs: " + S.ToString("#0.00000"));
             S = 0;
             //Hold Results on screen
             Console.ReadLine();          
             
         }
 
+        static void TimingTest()
+        {
+            Stopwatch stopWatch = new Stopwatch();
+            double[] correlations;
+            double Rlb;
+
+            //2 Component Tests
+            number = 2;
+            component_reliabilities = new double[] {0.8, 0.75};
+            correlations = new double[] { 1.00, -0.28,
+                                         -0.28,  1.00};
+            correlations_matrix = Matrix<double>.Build.Dense(2,2,correlations);
+            GenerateSigma();
+            //Series
+            CS.Clear();
+            PS.Clear();
+            CS.Add(new int[] {1});
+            CS.Add(new int[] {2});
+            PS.Add(new int[] {1,2});
+            Generate_Bm();
+            //Numerical 2 Component Series 
+            stopWatch = Stopwatch.StartNew();
+            Rlb = TotalProbability(new int[] {1,1});
+            stopWatch.Stop();
+            Console.WriteLine("Num 2 Series:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.");
+            //Simulation 2 Component Series
+            stopWatch = Stopwatch.StartNew();
+            Rlb = Simulation(1000);
+            stopWatch.Stop();
+            Console.WriteLine("Sim 2 Series:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.\n");
+            //Parallel
+            CS.Clear();
+            PS.Clear();
+            CS.Add(new int[] {1,2});
+            PS.Add(new int[] {1});
+            PS.Add(new int[] {2});            
+            //Numerical 2 Component Parallel 
+            stopWatch = Stopwatch.StartNew();
+            Rlb = 1 - TotalProbability(new int[] {0,0});
+            stopWatch.Stop();
+            Console.WriteLine("Num 2 Parallel:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.");
+            //Simulation 2 Component Parallel
+            stopWatch = Stopwatch.StartNew();
+            Rlb = Simulation(1000);
+            stopWatch.Stop();
+            Console.WriteLine("Sim 2 Parallel:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.\n");
+
+            //3 Component Tests
+            number = 3;
+            component_reliabilities = new double[] {0.8, 0.75, 0.7};
+            correlations = new double[] { 1.00, -0.28, 0.1,
+                                         -0.28,  1.00, 0.2,
+                                          0.1,   0.2,  1.00};
+            correlations_matrix = Matrix<double>.Build.Dense(3,3,correlations);
+            GenerateSigma();
+            //Series
+            CS.Clear();
+            PS.Clear();
+            CS.Add(new int[] {1});
+            CS.Add(new int[] {2});
+            CS.Add(new int[] {3});
+            PS.Add(new int[] {1,2,3});
+            Generate_Bm();
+            //Numerical 3 Component Series 
+            stopWatch = Stopwatch.StartNew();
+            Rlb = TotalProbability(new int[] {1,1,1});
+            stopWatch.Stop();
+            Console.WriteLine("Num 3 Series:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.");
+            //Simulation 3 Component Series
+            stopWatch = Stopwatch.StartNew();
+            Rlb = Simulation(1000);
+            stopWatch.Stop();
+            Console.WriteLine("Sim 3 Series:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.\n");
+            //Parallel
+            CS.Clear();
+            PS.Clear();
+            CS.Add(new int[] {1,2,3});
+            PS.Add(new int[] {1});
+            PS.Add(new int[] {2});
+            PS.Add(new int[] {3});              
+            //Numerical 3 Component Parallel 
+            stopWatch = Stopwatch.StartNew();
+            Rlb = 1 - TotalProbability(new int[] {0,0,0});
+            stopWatch.Stop();
+            Console.WriteLine("Num 3 Parallel:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.");
+            //Simulation 3 Component Parallel
+            stopWatch = Stopwatch.StartNew();
+            Rlb = Simulation(1000);
+            stopWatch.Stop();
+            Console.WriteLine("Sim 3 Parallel:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.\n");
+
+        }
         static void Generate_Bm()
         {
             List<double> temp = new List<double>();
@@ -165,15 +261,12 @@ namespace SoftwareReliability
                     }
                     if (ContainsCutset(Path.ToArray()))
                         break;
-                    else if (ContainsPathset(Path.ToArray()))
+                    if (ContainsPathset(Path.ToArray()))
                     {
                         success++;
                         break;
                     }
                 }
-                if (Path.Count == number)
-                    success ++;
-
             }
             return (double) success / (double) runs; 
         }
