@@ -125,7 +125,8 @@ namespace SoftwareReliability
             Console.ReadLine();          
             
         }
-
+        //Functions that need creating... Setup function: switch case to setup environment for each test case
+        //                                Run function: switch case to run appropriate example for each test case
         static void TimingTest()
         {
             Stopwatch stopWatch = new Stopwatch();
