@@ -91,9 +91,11 @@ namespace SoftwareReliability
             //Pathset
             PS.Add(new int[] {1,4});
             PS.Add(new int[] {2,3,4});
+            PS.Add(new int[] {2,5});
+            PS.Add(new int[] {1,3,5});
 
             //Testing
-            TimingTest();
+            //TimingTest();
 
 
             number = 5;
@@ -143,33 +145,38 @@ namespace SoftwareReliability
             CS.Add(new int[] {2});
             PS.Add(new int[] {1,2});
             Generate_Bm();
+             
             //Numerical 2 Component Series 
             stopWatch = Stopwatch.StartNew();
             Rlb = TotalProbability(new int[] {1,1});
             stopWatch.Stop();
             Console.WriteLine("Num 2 Series:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.");
+            
             //Simulation 2 Component Series
             stopWatch = Stopwatch.StartNew();
             Rlb = Simulation(1000);
             stopWatch.Stop();
             Console.WriteLine("Sim 2 Series:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.\n");
+            
             //Parallel
             CS.Clear();
             PS.Clear();
             CS.Add(new int[] {1,2});
             PS.Add(new int[] {1});
             PS.Add(new int[] {2});            
+             
             //Numerical 2 Component Parallel 
             stopWatch = Stopwatch.StartNew();
             Rlb = 1 - TotalProbability(new int[] {0,0});
             stopWatch.Stop();
             Console.WriteLine("Num 2 Parallel:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.");
+            
             //Simulation 2 Component Parallel
             stopWatch = Stopwatch.StartNew();
             Rlb = Simulation(1000);
             stopWatch.Stop();
             Console.WriteLine("Sim 2 Parallel:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.\n");
-
+            
             //3 Component Tests
             number = 3;
             component_reliabilities = new double[] {0.8, 0.75, 0.7};
@@ -186,16 +193,19 @@ namespace SoftwareReliability
             CS.Add(new int[] {3});
             PS.Add(new int[] {1,2,3});
             Generate_Bm();
+             
             //Numerical 3 Component Series 
             stopWatch = Stopwatch.StartNew();
             Rlb = TotalProbability(new int[] {1,1,1});
             stopWatch.Stop();
             Console.WriteLine("Num 3 Series:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.");
+            
             //Simulation 3 Component Series
             stopWatch = Stopwatch.StartNew();
             Rlb = Simulation(1000);
             stopWatch.Stop();
             Console.WriteLine("Sim 3 Series:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.\n");
+            
             //Parallel
             CS.Clear();
             PS.Clear();
@@ -203,11 +213,13 @@ namespace SoftwareReliability
             PS.Add(new int[] {1});
             PS.Add(new int[] {2});
             PS.Add(new int[] {3});              
+            
             //Numerical 3 Component Parallel 
             stopWatch = Stopwatch.StartNew();
             Rlb = 1 - TotalProbability(new int[] {0,0,0});
             stopWatch.Stop();
             Console.WriteLine("Num 3 Parallel:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.");
+            
             //Simulation 3 Component Parallel
             stopWatch = Stopwatch.StartNew();
             Rlb = Simulation(1000);
@@ -232,6 +244,7 @@ namespace SoftwareReliability
 
         }
 
+        //Needs further optimization with hashing at node values to eliminate redundant computations
         static double Simulation(int runs)
         {
             List<int> Path = new List<int>();
@@ -254,7 +267,7 @@ namespace SoftwareReliability
                     }
                     else
                     {
-                        if(choice < ConditionalProbability(Path.ToArray()))
+                        if(choice < ConditionalProbability(Path.Concat(new List<int> {1}).ToArray()))
                             Path.Add(1);
                         else
                             Path.Add(0);
@@ -267,6 +280,7 @@ namespace SoftwareReliability
                         break;
                     }
                 }
+                
             }
             return (double) success / (double) runs; 
         }
