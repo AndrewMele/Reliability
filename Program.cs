@@ -127,121 +127,189 @@ namespace SoftwareReliability
         }
         //Functions that need creating... Setup function: switch case to setup environment for each test case
         //                                Run function: switch case to run appropriate example for each test case
-        static void TimingTest()
+        
+        //Function which builds the appropriate component network based on input string (does not generate b vectors only intializes)
+        static void Build(string s)
         {
-            Stopwatch stopWatch = new Stopwatch();
             double[] correlations;
-            double Rlb;
-
-            //2 Component Tests
-            number = 2;
-            component_reliabilities = new double[] {0.8, 0.75};
-            correlations = new double[] { 1.00, -0.28,
-                                         -0.28,  1.00};
-            correlations_matrix = Matrix<double>.Build.Dense(2,2,correlations);
-            GenerateSigma();
-            //Series
-            CS.Clear();
-            PS.Clear();
-            CS.Add(new int[] {1});
-            CS.Add(new int[] {2});
-            PS.Add(new int[] {1,2});
-            Generate_Bm();
-             
-            //Numerical 2 Component Series 
-            stopWatch = Stopwatch.StartNew();
-            Rlb = TotalProbability(new int[] {1,1});
-            stopWatch.Stop();
-            Console.WriteLine("Num 2 Series:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.");
-            
-            //Simulation 2 Component Series
-            stopWatch = Stopwatch.StartNew();
-            Rlb = Simulation(1000);
-            stopWatch.Stop();
-            Console.WriteLine("Sim 2 Series:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.\n");
-            
-            //Parallel
-            CS.Clear();
-            PS.Clear();
-            CS.Add(new int[] {1,2});
-            PS.Add(new int[] {1});
-            PS.Add(new int[] {2});            
-             
-            //Numerical 2 Component Parallel 
-            stopWatch = Stopwatch.StartNew();
-            Rlb = 1 - TotalProbability(new int[] {0,0});
-            stopWatch.Stop();
-            Console.WriteLine("Num 2 Parallel:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.");
-            
-            //Simulation 2 Component Parallel
-            stopWatch = Stopwatch.StartNew();
-            Rlb = Simulation(1000);
-            stopWatch.Stop();
-            Console.WriteLine("Sim 2 Parallel:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.\n");
-            
-            //3 Component Tests
-            number = 3;
-            component_reliabilities = new double[] {0.8, 0.75, 0.7};
-            correlations = new double[] { 1.00, -0.28, 0.1,
-                                         -0.28,  1.00, 0.2,
-                                          0.1,   0.2,  1.00};
-            correlations_matrix = Matrix<double>.Build.Dense(3,3,correlations);
-            GenerateSigma();
-            //Series
-            CS.Clear();
-            PS.Clear();
-            CS.Add(new int[] {1});
-            CS.Add(new int[] {2});
-            CS.Add(new int[] {3});
-            PS.Add(new int[] {1,2,3});
-            Generate_Bm();
-             
-            //Numerical 3 Component Series 
-            stopWatch = Stopwatch.StartNew();
-            Rlb = TotalProbability(new int[] {1,1,1});
-            stopWatch.Stop();
-            Console.WriteLine("Num 3 Series:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.");
-            
-            //Simulation 3 Component Series
-            stopWatch = Stopwatch.StartNew();
-            Rlb = Simulation(1000);
-            stopWatch.Stop();
-            Console.WriteLine("Sim 3 Series:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.\n");
-            
-            //Parallel
-            CS.Clear();
-            PS.Clear();
-            CS.Add(new int[] {1,2,3});
-            PS.Add(new int[] {1});
-            PS.Add(new int[] {2});
-            PS.Add(new int[] {3});              
-            
-            //Numerical 3 Component Parallel 
-            stopWatch = Stopwatch.StartNew();
-            Rlb = 1 - TotalProbability(new int[] {0,0,0});
-            stopWatch.Stop();
-            Console.WriteLine("Num 3 Parallel:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.");
-            
-            //Simulation 3 Component Parallel
-            stopWatch = Stopwatch.StartNew();
-            Rlb = Simulation(1000);
-            stopWatch.Stop();
-            Console.WriteLine("Sim 3 Parallel:\t" + Rlb.ToString("#0.0000") + " which took " + stopWatch.Elapsed.TotalMilliseconds.ToString("#0.0000") + " ms.\n");
-
-        }
-        static void Generate_Bm()
-        {
-            List<double> temp = new List<double>();
             Bm.Clear();
             Bm.Add(new double[] {0});
             Bm.Add(new double[] {0});
+            CS.Clear();
+            PS.Clear();
 
-            for(int i = 2; i <= number; i++)
+            switch (s)
             {
-                temp.Clear();
-                temp.Add(0);
-                temp.AddRange(b(i));
-                Bm.Add(temp.ToArray());
+                case "2s":                      //2 component series
+                    number = 2;
+                    component_reliabilities = new double[] {0.8, 0.75};
+                    correlations = new double[] { 1.00, -0.28,
+                                                -0.28,  1.00};
+                    correlations_matrix = Matrix<double>.Build.Dense(2,2,correlations);
+                    GenerateSigma();
+                    CS.Add(new int[] {1});
+                    CS.Add(new int[] {2});
+                    PS.Add(new int[] {1,2});
+                    break;
+                case "2p":                      //2 component parallel
+                    number = 2;
+                    component_reliabilities = new double[] {0.8, 0.75};
+                    correlations = new double[] { 1.00, -0.28,
+                                                -0.28,  1.00};
+                    correlations_matrix = Matrix<double>.Build.Dense(2,2,correlations);
+                    GenerateSigma();
+                    CS.Add(new int[] {1,2});
+                    PS.Add(new int[] {1});
+                    PS.Add(new int[] {2});
+                    break;
+                case "3s":                      //3 component series
+                    number = 3;
+                    component_reliabilities = new double[] {0.8, 0.75, 0.7};
+                    correlations = new double[] { 1.00, -0.28, 0.1,
+                                                -0.28,  1.00, 0.2,
+                                                0.1,   0.2,  1.00};
+                    correlations_matrix = Matrix<double>.Build.Dense(3,3,correlations);
+                    GenerateSigma();
+                    CS.Add(new int[] {1});
+                    CS.Add(new int[] {2});
+                    CS.Add(new int[] {3});
+                    PS.Add(new int[] {1,2,3});
+                    break;
+                case "3p":                      //3 component parallel
+                    number = 3;
+                    component_reliabilities = new double[] {0.8, 0.75, 0.7};
+                    correlations = new double[] { 1.00, -0.28, 0.1,
+                                                -0.28,  1.00, 0.2,
+                                                0.1,   0.2,  1.00};
+                    correlations_matrix = Matrix<double>.Build.Dense(3,3,correlations);
+                    GenerateSigma();
+                    CS.Add(new int[] {1,2,3});
+                    PS.Add(new int[] {1});
+                    PS.Add(new int[] {2});
+                    PS.Add(new int[] {3});
+                    break;
+                case "4s":                      //4 component series
+                    number = 4;
+                    component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72};
+                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15,
+                                                 -0.28,  1.00,   0.2, 0.30,
+                                                   0.1,   0.2,  1.00, 0.32,
+                                                 -0.15,  0.30,  0.32, 1.00};
+                    correlations_matrix = Matrix<double>.Build.Dense(4,4,correlations);
+                    GenerateSigma();
+                    CS.Add(new int[] {1});
+                    CS.Add(new int[] {2});
+                    CS.Add(new int[] {3});
+                    CS.Add(new int[] {4});
+                    PS.Add(new int[] {1,2,3,4});
+                    break;
+                case "4p":                      //4 component parallel
+                    number = 4;
+                    component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72};
+                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15,
+                                                 -0.28,  1.00,   0.2, 0.30,
+                                                   0.1,   0.2,  1.00, 0.32,
+                                                 -0.15,  0.30,  0.32, 1.00};
+                    correlations_matrix = Matrix<double>.Build.Dense(4,4,correlations);
+                    GenerateSigma();
+                    CS.Add(new int[] {1,2,3,4});
+                    PS.Add(new int[] {1});
+                    PS.Add(new int[] {2});
+                    PS.Add(new int[] {3});
+                    PS.Add(new int[] {4});
+                    break;
+                case "5s":                      //5 component series
+                    number = 5;
+                    component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73};
+                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15,
+                                                 -0.28,  1.00,   0.2, 0.30,-0.15,
+                                                   0.1,   0.2,  1.00, 0.32, 0.50,
+                                                 -0.15,  0.30,  0.32, 1.00,-0.22,
+                                                  0.15, -0.15,  0.50,-0.22, 1.00};
+                    correlations_matrix = Matrix<double>.Build.Dense(5,5,correlations);
+                    GenerateSigma();
+                    CS.Add(new int[] {1});
+                    CS.Add(new int[] {2});
+                    CS.Add(new int[] {3});
+                    CS.Add(new int[] {4});
+                    CS.Add(new int[] {5});
+                    PS.Add(new int[] {1,2,3,4,5});
+                    break;
+                case "5p":                      //5 component parallel 
+                    number = 5;
+                    component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73};
+                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15,
+                                                 -0.28,  1.00,   0.2, 0.30,-0.15,
+                                                   0.1,   0.2,  1.00, 0.32, 0.50,
+                                                 -0.15,  0.30,  0.32, 1.00,-0.22,
+                                                  0.15, -0.15,  0.50,-0.22, 1.00};
+                    correlations_matrix = Matrix<double>.Build.Dense(5,5,correlations);
+                    GenerateSigma();
+                    CS.Add(new int[] {1,2,3,4,5});
+                    PS.Add(new int[] {1});
+                    PS.Add(new int[] {2});
+                    PS.Add(new int[] {3});
+                    PS.Add(new int[] {4});
+                    PS.Add(new int[] {5});
+                    break;
+                case "5bn":                     //5 component bridge network
+                    number = 5;
+                    component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73};
+                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15,
+                                                 -0.28,  1.00,   0.2, 0.30,-0.15,
+                                                   0.1,   0.2,  1.00, 0.32, 0.50,
+                                                 -0.15,  0.30,  0.32, 1.00,-0.22,
+                                                  0.15, -0.15,  0.50,-0.22, 1.00};
+                    correlations_matrix = Matrix<double>.Build.Dense(5,5,correlations);
+                    GenerateSigma();
+                    CS.Add(new int[] {1,2});
+                    CS.Add(new int[] {4,5});
+                    CS.Add(new int[] {1,3,5});
+                    CS.Add(new int[] {2,3,4});
+                    PS.Add(new int[] {1,4});
+                    PS.Add(new int[] {2,3,4});
+                    PS.Add(new int[] {2,5});
+                    PS.Add(new int[] {1,3,5});
+                    break;
+                case "2o3":
+                    number = 3;
+                    component_reliabilities = new double[] {0.8, 0.75, 0.7};
+                    correlations = new double[] { 1.00, -0.28, 0.1,
+                                                -0.28,  1.00, 0.2,
+                                                0.1,   0.2,  1.00};
+                    correlations_matrix = Matrix<double>.Build.Dense(3,3,correlations);
+                    GenerateSigma();
+                    CS.Add(new int[] {1,2});
+                    CS.Add(new int[] {1,3});
+                    CS.Add(new int[] {2,3});
+                    PS.Add(new int[] {1,2});
+                    PS.Add(new int[] {1,3});
+                    PS.Add(new int[] {2,3});
+                    break;
+                default:
+                    break;
+            }
+        }
+       
+        static void Generate_Bm(int v = 0)
+        {
+            List<double> temp = new List<double>();
+            if (v == 0)
+            {
+                for(int i = 2; i <= number; i++)
+                {
+                    temp.Clear();
+                    temp.Add(0);
+                    temp.AddRange(b(i));
+                    Bm.Add(temp.ToArray());
+                }
+            }
+            else
+            {
+                    temp.Clear();
+                    temp.Add(0);
+                    temp.AddRange(b(v));
+                    Bm.Add(temp.ToArray());
             }
 
         }
