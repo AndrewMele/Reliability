@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
@@ -27,82 +28,14 @@ namespace SoftwareReliability
         
         static void Main(string[] args)
         {
-            //Double arrays based off of column_major notation which is used to create Matrices
-            /*double[] correlations = {  1.00000, 0.00921, 0.01604,                     //2 out of 3
-                                       0.00921, 1.00000, 0.03902,
-                                       0.01604, 0.03902, 1.00000};*/
-            /*double[] correlations = {1.0000, 0.0094, -0.0023, -0.0020,              //RAMS2014
-                                     0.0094, 1.0000,  0.0011,  0.0010,
-                                    -0.0023, 0.0011,  1.0000,  0.0010,
-                                    -0.0020, 0.0010,  0.0010,  1.0000}; */
-            double[] correlations = {1.0000, -0.2800, 0.1000, -0.1500, 0.1500,    //Hoda's
-                                      -0.2800,  1.0000, 0.2000,  0.3000,-0.1500,
-                                       0.1000,  0.2000, 1.0000,  0.3200, 0.5000,
-                                      -0.1500,  0.3000, 0.3200,  1.0000,-0.2200,
-                                       0.1500, -0.1500, 0.5000, -0.2200, 1.0000};
-            /*double[] correlations = {  1.0000,  0.2800, 0.1000, -0.0015, 0.1500, 0.0345, 0.0762, -0.0257, 0.0440, -0.0057,    //10 State
-                                       0.2800,  1.0000, 0.2000,  0.3000,-0.0150, 0.0067,-0.0229,  0.0033, 0.1123,  0.0478,  
-                                       0.1000,  0.2000, 1.0000,  0.3200, 0.0500,-0.0291, 0.0622,  0.0783, 0.0492, -0.0111,
-                                      -0.0015,  0.3000, 0.3200,  1.0000,-0.0220, 0.0118, 0.0292,  0.0333, 0.0228,  0.0459,
-                                       0.1500, -0.0150, 0.0500, -0.0220, 1.0000, 0.0234, 0.0456, -0.0654, 0.0122, -0.0555,
-                                       0.0345,  0.0067,-0.0291,  0.0118, 0.0234, 1.0000, 0.0137, -0.0372, 0.0177,  0.0433,   
-                                       0.0762, -0.0229, 0.0622,  0.0292, 0.0456, 0.0137, 1.0000,  0.0144, 0.0633, -0.0221,
-                                      -0.0257,  0.0033, 0.0783,  0.0333,-0.0654,-0.0372, 0.0144,  1.0000, 0.0286,  0.0166,
-                                       0.0440,  0.1123, 0.0492,  0.0228, 0.0122, 0.0177, 0.0633,  0.0286, 1.0000, -0.0223,
-                                      -0.0057,  0.0478,-0.0111,  0.0459,-0.0555, 0.0433,-0.0221,  0.0166,-0.0223,  1.0000};*/
+            //Setup stopwatch
+            Stopwatch stopWatch = new Stopwatch();
+            stopWatch.Start();
 
-            //Creating Corresponding Matrices
-            var M = Matrix<double>.Build;                //Macro to build Matrix
-            component_reliabilities = new double [] { 0.8, 0.75, 0.7, 0.72, 0.73 };
-            correlations_matrix = M.Dense(5, 5, correlations);
+            //Build environment
+            Build("2o3");
             
-            CS.Clear();
-            PS.Clear();
-            //10 State Cutset
-            List<int[]> CS1 = new List<int[]>();
-            CS1.Add(new int[] { 1, 6 });
-            CS1.Add(new int[] { 4, 8 });
-            CS1.Add(new int[] { 1, 5 });
-            CS1.Add(new int[] { 4, 7 });
-            CS1.Add(new int[] { 2, 5, 9 });
-            CS1.Add(new int[] { 3, 5, 9 });
-            CS1.Add(new int[] { 2, 8, 10 });
-            CS1.Add(new int[] { 3, 6, 9 });
-            CS1.Add(new int[] { 2, 7, 10 });
-            CS1.Add(new int[] { 3, 8, 10 });
-            CS1.Add(new int[] { 3, 7, 10 });
-            CS1.Add(new int[] { 2, 6, 9 });
-            CS1.Add(new int[] { 1, 7, 9, 10 });
-            CS1.Add(new int[] { 4, 5, 9, 10 });
-            CS1.Add(new int[] { 4, 6, 9, 10 });
-            CS1.Add(new int[] { 1, 8, 9, 10 });
-            //Hoda's Cutset
-            List<int[]> CS2 = new List<int[]>();
-            CS.Add(new int[] {1,2});
-            CS.Add(new int[] {4,5});
-            CS.Add(new int[] {1,3,5});
-            CS.Add(new int[] {2,3,4});
-            //2 out of 3 Cutset
-            List<int[]> CS3 = new List<int[]>();
-            CS3.Add(new int[] {1,2});
-            CS3.Add(new int[] {1,3});
-            CS3.Add(new int[] {2,3});
-
-
-            //Pathset
-            PS.Add(new int[] {1,4});
-            PS.Add(new int[] {2,3,4});
-            PS.Add(new int[] {2,5});
-            PS.Add(new int[] {1,3,5});
-
-            //Testing
-            //TimingTest();
-
-
-            number = 5;
-            //GenerateComponents(0.7, 0.99);
-            //GenerateCorrelations(0.1);
-            GenerateSigma();
+            /*/print info
             Console.Write("Component Reliabilities: < ");
             foreach (double d in component_reliabilities)
                 Console.Write(d + " ");
@@ -115,13 +48,17 @@ namespace SoftwareReliability
                     Console.WriteLine("");
                 Console.Write(correlations_array[i].ToString("#0.00000") + "  ");
             }
-            Console.WriteLine("");
-            Generate_Bm();
-            FindReliability();
+            Console.WriteLine("");*/
+            
+            //Execute run
+            //FindReliability();
+            
             double S = Simulation(1000);
             Console.WriteLine("Simulation Estimate with 1,000 runs: " + S.ToString("#0.00000"));
-            S = 0;
+
             //Hold Results on screen
+            stopWatch.Stop();
+            Console.WriteLine("Task took " + stopWatch.Elapsed.TotalMilliseconds.ToString() + " ms.");
             Console.ReadLine();          
             
         }
@@ -319,7 +256,10 @@ namespace SoftwareReliability
         {
             List<int> Path = new List<int>();
             Random Rand = new Random();
+            Hashtable ht = new Hashtable();
+            //var pkey = Path.Concat(new List<int> {1}).ToArray(); //path key used in hashtable
             double choice;
+            double condi;
             int success = 0;
 
             for (int i = 0; i < runs; i++)
@@ -328,6 +268,7 @@ namespace SoftwareReliability
                 for (int j = 0; j < number; j++)
                 {
                     choice = Rand.NextDouble();
+                    //If this is the first component in the path
                     if (j == 0)
                     {
                         if (choice < component_reliabilities[0])
@@ -337,7 +278,16 @@ namespace SoftwareReliability
                     }
                     else
                     {
-                        if(choice < ConditionalProbability(Path.Concat(new List<int> {1}).ToArray()))
+                        //Check if we have the B vector for the upcoming calculation
+                        if (Bm.Count < Path.Count + 2)  //Bm = {0,0,...}
+                            Generate_Bm(Path.Count + 1);//Bm = {0,0,x,...}
+                        //Check if prob is in hash
+                        if (!ht.ContainsKey(String.Join("",Path.Concat(new List<int> {1}).ToArray())))
+                        {
+                            condi = ConditionalProbability(Path.Concat(new List<int> {1}).ToArray());
+                            ht.Add(String.Join("",Path.Concat(new List<int> {1}).ToArray()), condi);
+                        }
+                        if (choice < (double)ht[String.Join("",Path.Concat(new List<int> {1}).ToArray())])
                             Path.Add(1);
                         else
                             Path.Add(0);
@@ -401,19 +351,21 @@ namespace SoftwareReliability
         //Function which calculates bridge reliability based on n number of components and cutsets CS
         static double FindReliability()
         {
+            Generate_Bm();
             //Enumerate All Successful States
             List<int[]> Paths = RecursiveEnumerate();
             double R = 0;
             //Loop through and see which Leaf Nodes are success
             foreach (int[] i in Paths)
             {
-                    Console.Write("Pr(");
+                    /*Console.Write("Pr(");
                     foreach (int ii in i)
                         Console.Write(ii);
-                    Console.WriteLine(") \t= " + TotalProbability(i).ToString("#0.0000000000"));
+                    Console.WriteLine(") \t= " + TotalProbability(i).ToString("#0.0000000000"));*/
                     R += TotalProbability(i);
-                    Console.WriteLine("Reliability \t= " + R.ToString("#0.0000000000") + "\n");
+                    //Console.WriteLine("Reliability \t= " + R.ToString("#0.0000000000") + "\n");
             }
+            Console.WriteLine("Reliability \t= " + R.ToString("#0.0000000000"));
             return R;
         }
         //Recursive Dynamic Approach to Enumerating all possible states, defaults to only adding Full Path and not partial
@@ -623,6 +575,11 @@ namespace SoftwareReliability
         //Function that should reproduce the results of the RAMS2014 Paper (Make sure correlations matrix and component reliabilities are changed)
         static void RAMS2014()
         {
+            //static double[] component_reliabilities = { 0.99, 0.995, 0.98, 0.995};        //RAMS2014
+            /*double[] correlations = {1.0000, 0.0094, -0.0023, -0.0020,              //RAMS2014
+                                     0.0094, 1.0000,  0.0011,  0.0010,
+                                    -0.0023, 0.0011,  1.0000,  0.0010,
+                                    -0.0020, 0.0010,  0.0010,  1.0000}; */
             List<int[]> All_States = RecursiveEnumerate();
             foreach (int[] i in All_States)
             {
