@@ -33,7 +33,7 @@ namespace SoftwareReliability
             stopWatch.Start();
 
             //Build environment
-            Build("2o3");
+            Build("5bn");
             
             /*/print info
             Console.Write("Component Reliabilities: < ");
@@ -53,7 +53,7 @@ namespace SoftwareReliability
             //Execute run
             //FindReliability();
             
-            double S = Simulation(1000);
+            double S = Simulation(1000000);
             Console.WriteLine("Simulation Estimate with 1,000 runs: " + S.ToString("#0.00000"));
 
             //Hold Results on screen
