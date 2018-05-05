@@ -29,11 +29,12 @@ namespace SoftwareReliability
         static void Main(string[] args)
         {
             //Setup stopwatch
-            Stopwatch stopWatch = new Stopwatch();
-            stopWatch.Start();
+            DateTime startTime, endTime;
+            double elpasedMilliseconds;
+            startTime = DateTime.Now;
 
             //Build environment
-            Build("5bn");
+            Build("3s");
             
             /*/print info
             Console.Write("Component Reliabilities: < ");
@@ -53,12 +54,13 @@ namespace SoftwareReliability
             //Execute run
             //FindReliability();
             
-            double S = Simulation(1000000);
+            double S = Simulation(1000);
             Console.WriteLine("Simulation Estimate with 1,000 runs: " + S.ToString("#0.00000"));
 
             //Hold Results on screen
-            stopWatch.Stop();
-            Console.WriteLine("Task took " + stopWatch.Elapsed.TotalMilliseconds.ToString() + " ms.");
+            endTime = DateTime.Now;
+            elpasedMilliseconds = ((TimeSpan)(endTime - startTime)).TotalMilliseconds;
+            Console.WriteLine("Task took " + elpasedMilliseconds.ToString("#0.00") + " ms.");
             Console.ReadLine();          
             
         }
