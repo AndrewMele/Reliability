@@ -34,7 +34,7 @@ namespace SoftwareReliability
             startTime = DateTime.Now;
 
             //Build environment
-            Build("3s");
+            Build("4o7");
             
             /*/print info
             Console.Write("Component Reliabilities: < ");
@@ -60,12 +60,29 @@ namespace SoftwareReliability
             //Hold Results on screen
             endTime = DateTime.Now;
             elpasedMilliseconds = ((TimeSpan)(endTime - startTime)).TotalMilliseconds;
-            Console.WriteLine("Task took " + elpasedMilliseconds.ToString("#0.00") + " ms.");
-            Console.ReadLine();          
-            
+            Console.WriteLine("Task took " + elpasedMilliseconds.ToString("#0.00") + " ms.");           
         }
         //Functions that need creating... Setup function: switch case to setup environment for each test case
         //                                Run function: switch case to run appropriate example for each test case
+        
+        
+        static List<int[]> WolframPerms(List<int[]> perms)
+        {
+            List<int> temp = new List<int>();
+            List<int[]> newList = new List<int[]>();
+
+            foreach(int[] i in perms)
+            {
+                temp.Clear();
+                for(int j = 0; j < i.Length; j++)
+                {
+                    if(i[j] == 1)
+                        temp.Add(j+1);
+                }
+                newList.Add(temp.ToArray());
+            }
+            return newList;
+        }
         
         //Function which builds the appropriate component network based on input string (does not generate b vectors only intializes)
         static void Build(string s)
@@ -224,6 +241,89 @@ namespace SoftwareReliability
                     PS.Add(new int[] {1,2});
                     PS.Add(new int[] {1,3});
                     PS.Add(new int[] {2,3});
+                    break;
+                case "3o5":
+                    number = 5;
+                    component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73};
+                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15,
+                                                 -0.28,  1.00,   0.2, 0.30,-0.15,
+                                                   0.1,   0.2,  1.00, 0.32, 0.50,
+                                                 -0.15,  0.30,  0.32, 1.00,-0.22,
+                                                  0.15, -0.15,  0.50,-0.22, 1.00};
+                    correlations_matrix = Matrix<double>.Build.Dense(5,5,correlations);
+                    GenerateSigma();
+                    CS.Add(new int[] {1,2,3});
+                    CS.Add(new int[] {1,2,4});
+                    CS.Add(new int[] {1,2,5});
+                    CS.Add(new int[] {1,3,4});
+                    CS.Add(new int[] {1,3,5});
+                    CS.Add(new int[] {1,4,5});
+                    CS.Add(new int[] {2,3,4});
+                    CS.Add(new int[] {2,3,5});
+                    CS.Add(new int[] {2,4,5});
+                    CS.Add(new int[] {3,4,5});
+
+                    PS.Add(new int[] {1,2,3});
+                    PS.Add(new int[] {1,2,4});
+                    PS.Add(new int[] {1,2,5});
+                    PS.Add(new int[] {1,3,4});
+                    PS.Add(new int[] {1,3,5});
+                    PS.Add(new int[] {1,4,5});
+                    PS.Add(new int[] {2,3,4});
+                    PS.Add(new int[] {2,3,5});
+                    PS.Add(new int[] {2,4,5});
+                    PS.Add(new int[] {3,4,5});
+                    break;
+                case "4o7":
+                    number = 7;
+                    component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73, 0.77, 0.67};
+                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15, 0.05,-0.23,
+                                                 -0.28,  1.00,   0.2, 0.30,-0.15,-0.20, 0.16,
+                                                   0.1,   0.2,  1.00, 0.32, 0.50,-0.30, 0.17,
+                                                 -0.15,  0.30,  0.32, 1.00,-0.22, 0.20,-0.30, 
+                                                  0.15, -0.15,  0.50,-0.22, 1.00, 0.25,-0.16,
+                                                  0.05, -0.20, -0.30, 0.20, 0.25, 1.00, 0.27,
+                                                 -0.23,  0.16,  0.17,-0.30,-0.16, 0.27, 1.00};
+                    correlations_matrix = Matrix<double>.Build.Dense(7,7,correlations);
+                    GenerateSigma();
+                    List<int[]> wolfram = new List<int[]>();
+                    wolfram.AddRange(new List<int[]> {new int[] {1, 1, 1, 1, 0, 0, 0}, 
+                                    new int[] {1, 1, 1, 0, 1, 0, 0}, 
+                                    new int[] {1, 1, 1, 0, 0, 1, 0}, 
+                                    new int[] {1, 1, 1, 0, 0, 0, 1}, 
+                                    new int[] {1, 1, 0, 1, 1, 0, 0}, 
+                                    new int[] {1, 1, 0, 1, 0, 1, 0}, 
+                                    new int[] {1, 1, 0, 1, 0, 0, 1}, 
+                                    new int[] {1, 1, 0, 0, 1, 1, 0}, 
+                                    new int[] {1, 1, 0, 0, 1, 0, 1}, 
+                                    new int[] {1, 1, 0, 0, 0, 1, 1}, 
+                                    new int[] {1, 0, 1, 1, 1, 0, 0}, 
+                                    new int[] {1, 0, 1, 1, 0, 1, 0}, 
+                                    new int[] {1, 0, 1, 1, 0, 0, 1}, 
+                                    new int[] {1, 0, 1, 0, 1, 1, 0}, 
+                                    new int[] {1, 0, 1, 0, 1, 0, 1}, 
+                                    new int[] {1, 0, 1, 0, 0, 1, 1}, 
+                                    new int[] {1, 0, 0, 1, 1, 1, 0}, 
+                                    new int[] {1, 0, 0, 1, 1, 0, 1}, 
+                                    new int[] {1, 0, 0, 1, 0, 1, 1}, 
+                                    new int[] {1, 0, 0, 0, 1, 1, 1}, 
+                                    new int[] {0, 1, 1, 1, 1, 0, 0}, 
+                                    new int[] {0, 1, 1, 1, 0, 1, 0}, 
+                                    new int[] {0, 1, 1, 1, 0, 0, 1}, 
+                                    new int[] {0, 1, 1, 0, 1, 1, 0}, 
+                                    new int[] {0, 1, 1, 0, 1, 0, 1}, 
+                                    new int[] {0, 1, 1, 0, 0, 1, 1}, 
+                                    new int[] {0, 1, 0, 1, 1, 1, 0}, 
+                                    new int[] {0, 1, 0, 1, 1, 0, 1}, 
+                                    new int[] {0, 1, 0, 1, 0, 1, 1}, 
+                                    new int[] {0, 1, 0, 0, 1, 1, 1}, 
+                                    new int[] {0, 0, 1, 1, 1, 1, 0}, 
+                                    new int[] {0, 0, 1, 1, 1, 0, 1}, 
+                                    new int[] {0, 0, 1, 1, 0, 1, 1}, 
+                                    new int[] {0, 0, 1, 0, 1, 1, 1}, 
+                                    new int[] {0, 0, 0, 1, 1, 1, 1}});
+                    CS = new List<int[]>(WolframPerms(wolfram));
+                    PS = new List<int[]>(CS);
                     break;
                 default:
                     break;
