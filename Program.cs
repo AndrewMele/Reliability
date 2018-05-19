@@ -34,7 +34,7 @@ namespace SoftwareReliability
             startTime = DateTime.Now;
 
             //Build environment
-            Build("4o7");
+            Build("8p");
             
             /*/print info
             Console.Write("Component Reliabilities: < ");
@@ -54,8 +54,8 @@ namespace SoftwareReliability
             //Execute run
             //FindReliability();
             
-            double S = Simulation(1000);
-            Console.WriteLine("Simulation Estimate with 1,000 runs: " + S.ToString("#0.00000"));
+            double S = Simulation(1000000);
+            Console.WriteLine("Simulation Estimate with 1,000 runs: " + S.ToString("#0.0000000000"));
 
             //Hold Results on screen
             endTime = DateTime.Now;
@@ -207,6 +207,109 @@ namespace SoftwareReliability
                     PS.Add(new int[] {3});
                     PS.Add(new int[] {4});
                     PS.Add(new int[] {5});
+                    break;
+                case "6s":                      //6 component series 
+                    number = 6;
+                    component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73, 0.77};
+                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15, 0.05,
+                                                 -0.28,  1.00,   0.2, 0.30,-0.15,-0.20, 
+                                                   0.1,   0.2,  1.00, 0.32, 0.50,-0.30, 
+                                                 -0.15,  0.30,  0.32, 1.00,-0.22, 0.20, 
+                                                  0.15, -0.15,  0.50,-0.22, 1.00, 0.25,
+                                                  0.05, -0.20, -0.30, 0.20, 0.25, 1.00};
+                    correlations_matrix = Matrix<double>.Build.Dense(6,6,correlations);
+                    GenerateSigma();
+                    PS.Add(new int[] {1,2,3,4,5,6});
+                    CS.Add(new int[] {1});
+                    CS.Add(new int[] {2});
+                    CS.Add(new int[] {3});
+                    CS.Add(new int[] {4});
+                    CS.Add(new int[] {5});
+                    CS.Add(new int[] {6});
+                    break;
+                case "6p":                      //6 component parallel 
+                    number = 6;
+                    component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73, 0.77};
+                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15, 0.05,
+                                                 -0.28,  1.00,   0.2, 0.30,-0.15,-0.20, 
+                                                   0.1,   0.2,  1.00, 0.32, 0.50,-0.30, 
+                                                 -0.15,  0.30,  0.32, 1.00,-0.22, 0.20, 
+                                                  0.15, -0.15,  0.50,-0.22, 1.00, 0.25,
+                                                  0.05, -0.20, -0.30, 0.20, 0.25, 1.00};
+                    correlations_matrix = Matrix<double>.Build.Dense(6,6,correlations);
+                    GenerateSigma();
+                    CS.Add(new int[] {1,2,3,4,5,6});
+                    PS.Add(new int[] {1});
+                    PS.Add(new int[] {2});
+                    PS.Add(new int[] {3});
+                    PS.Add(new int[] {4});
+                    PS.Add(new int[] {5});
+                    PS.Add(new int[] {6});
+                    break;
+                case "7s":                      //7 component series 
+                    number = 7;
+                    component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73, 0.77, 0.67};
+                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15, 0.05,-0.23,
+                                                 -0.28,  1.00,   0.2, 0.30,-0.15,-0.20, 0.16,
+                                                   0.1,   0.2,  1.00, 0.32, 0.50,-0.30, 0.17,
+                                                 -0.15,  0.30,  0.32, 1.00,-0.22, 0.20,-0.30, 
+                                                  0.15, -0.15,  0.50,-0.22, 1.00, 0.25,-0.16,
+                                                  0.05, -0.20, -0.30, 0.20, 0.25, 1.00, 0.27,
+                                                 -0.23,  0.16,  0.17,-0.30,-0.16, 0.27, 1.00};
+                    correlations_matrix = Matrix<double>.Build.Dense(7,7,correlations);
+                    GenerateSigma();
+                    PS.Add(new int[] {1,2,3,4,5,6,7});
+                    CS.Add(new int[] {1});
+                    CS.Add(new int[] {2});
+                    CS.Add(new int[] {3});
+                    CS.Add(new int[] {4});
+                    CS.Add(new int[] {5});
+                    CS.Add(new int[] {6});
+                    CS.Add(new int[] {7});
+                    break;
+                case "7p":                      //7 component parallel 
+                    number = 7;
+                    component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73, 0.77, 0.67};
+                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15, 0.05,-0.23,
+                                                 -0.28,  1.00,   0.2, 0.30,-0.15,-0.20, 0.16,
+                                                   0.1,   0.2,  1.00, 0.32, 0.50,-0.30, 0.17,
+                                                 -0.15,  0.30,  0.32, 1.00,-0.22, 0.20,-0.30, 
+                                                  0.15, -0.15,  0.50,-0.22, 1.00, 0.25,-0.16,
+                                                  0.05, -0.20, -0.30, 0.20, 0.25, 1.00, 0.27,
+                                                 -0.23,  0.16,  0.17,-0.30,-0.16, 0.27, 1.00};
+                    correlations_matrix = Matrix<double>.Build.Dense(7,7,correlations);
+                    GenerateSigma();
+                    CS.Add(new int[] {1,2,3,4,5,6,7});
+                    PS.Add(new int[] {1});
+                    PS.Add(new int[] {2});
+                    PS.Add(new int[] {3});
+                    PS.Add(new int[] {4});
+                    PS.Add(new int[] {5});
+                    PS.Add(new int[] {6});
+                    PS.Add(new int[] {7});
+                    break;
+                case "8p":                      //8 component parallel 
+                    number = 8;
+                    component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73, 0.77, 0.67,0.5};
+                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15, 0.05,-0.23, 0.22,
+                                                 -0.28,  1.00,   0.2, 0.30,-0.15,-0.20, 0.16,-0.16,
+                                                   0.1,   0.2,  1.00, 0.32, 0.50,-0.30, 0.17, 0.07,
+                                                 -0.15,  0.30,  0.32, 1.00,-0.22, 0.20,-0.30, 0.25,
+                                                  0.15, -0.15,  0.50,-0.22, 1.00, 0.25,-0.16, 0.10,
+                                                  0.05, -0.20, -0.30, 0.20, 0.25, 1.00, 0.27,-0.07,
+                                                 -0.23,  0.16,  0.17,-0.30,-0.16, 0.27, 1.00, 0.35,
+                                                  0.22, -0.16,  0.07, 0.25, 0.10,-0.07, 0.35, 1.00};
+                    correlations_matrix = Matrix<double>.Build.Dense(8,8,correlations);
+                    GenerateSigma();
+                    CS.Add(new int[] {1,2,3,4,5,6,7,8});
+                    PS.Add(new int[] {1});
+                    PS.Add(new int[] {2});
+                    PS.Add(new int[] {3});
+                    PS.Add(new int[] {4});
+                    PS.Add(new int[] {5});
+                    PS.Add(new int[] {6});
+                    PS.Add(new int[] {7});
+                    PS.Add(new int[] {8});
                     break;
                 case "5bn":                     //5 component bridge network
                     number = 5;
