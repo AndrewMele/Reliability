@@ -34,7 +34,7 @@ namespace SoftwareReliability
             startTime = DateTime.Now;
 
             //Build environment
-            Build("6o10");
+            Build("8s");
             
             /*/print info
             Console.Write("Component Reliabilities: < ");
@@ -53,9 +53,9 @@ namespace SoftwareReliability
             
             //Execute run
             //FindReliability();
-            
-            double S = Simulation(1000);
-            Console.WriteLine("Simulation Estimate with 1,000 runs: " + S.ToString("#0.0000000000"));
+            List<CorrelationPairs> issues = CorrelationCheck();
+            //double S = Simulation(1000);
+            //Console.WriteLine("Simulation Estimate with 1,000 runs: " + S.ToString("#0.0000000000"));
 
             //Hold Results on screen
             endTime = DateTime.Now;
@@ -785,7 +785,7 @@ namespace SoftwareReliability
         }
         //Generates Correlations based on component values
         static void GenerateCorrelations(double multi = -1)
-        {
+        {   /* 
             List<CorrelationPairs> bounds = CorrelationBounds(multi);
             List<double> temp = new List<double>();
             for (int i = 0; i < number; i++)
@@ -802,7 +802,7 @@ namespace SoftwareReliability
             }
             
            correlations_matrix = Matrix<double>.Build.Dense(number,number,temp.ToArray());
-
+            */
         }
         //Generates Sigma values based on Correlations
         static void GenerateSigma()
@@ -828,7 +828,7 @@ namespace SoftwareReliability
                     foreach (int ii in i)
                         Console.Write(ii);
                     Console.WriteLine(") \t= " + TotalProbability(i).ToString("#0.0000000000"));*/
-                    R += TotalProbability(i);
+                    R += TotalProbability(i,true);
                     //Console.WriteLine("Reliability \t= " + R.ToString("#0.0000000000") + "\n");
             }
             Console.WriteLine("Reliability \t= " + R.ToString("#0.0000000000"));
@@ -1059,6 +1059,22 @@ namespace SoftwareReliability
             Console.WriteLine("E{UF}\t = " + (TotalProbability(new int[] { 1, 0, 0, 0 }) + TotalProbability(new int[] { 0, 1, 0, 0 }) + TotalProbability(new int[] { 0, 0, 1, 1 }) + TotalProbability(new int[] { 0, 0, 1, 0 }) + TotalProbability(new int[] { 0, 0, 0, 1 }) + TotalProbability(new int[] { 0, 0, 0, 0 })).ToString("#0.############"));
         }
 
+        //Function which checks correlation_matrix to see if the values are within the minimum and maximum bounds set by the equations below
+        static List<CorrelationPairs> CorrelationCheck()
+        {
+            List<CorrelationPairs> bounds = CorrelationBounds();
+            List<CorrelationPairs> problems = new List<CorrelationPairs>();
+
+            for (int i = 0; i < component_reliabilities.Count() - 1; i++)
+            {
+                for (int j = i + 1; j < component_reliabilities.Count(); j++)
+                {
+                    if ((correlations_matrix[i,j] < bounds.Find(z => z.x == i && z.y == j).min) || (correlations_matrix[i,j] > bounds.Find(z => z.x == i && z.y == j).max))
+                        problems.Add(bounds.Find(z => z.x == i && z.y == j));
+                }
+            }
+            return problems;
+        }
         //Function which finds the maximum and minimum bounds for correlation given each combination
         static List<CorrelationPairs> CorrelationBounds(double multi = -1)
         {
@@ -1092,7 +1108,7 @@ namespace SoftwareReliability
                     /* if (multi != -1)
                         Console.WriteLine("Multiplier = {0}", multi.ToString("#0.00"));
                     Console.WriteLine("u[{0}]u[{1}] =\t {2} < x < {3}\tx= {4}", i, j, min.ToString("#0.0000000000"), max.ToString("#0.0000000000"), bound.ToString("#0.0000000000"));
-                    */temp.Add(new CorrelationPairs(i, j, bound));
+                    */temp.Add(new CorrelationPairs(i, j, min, max));
                 }
             }
             return temp;
@@ -1153,13 +1169,15 @@ namespace SoftwareReliability
         {
             public int x;
             public int y;
-            public double value;
+            public double min;
+            public double max;
 
-            public CorrelationPairs(int xx, int yy, double v)
+            public CorrelationPairs(int xx, int yy, double lower, double upper)
             {
                 x = xx;
                 y = yy;
-                value = v;
+                min = lower;
+                max = upper;
             }
         };
 
