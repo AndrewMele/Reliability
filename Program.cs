@@ -38,10 +38,8 @@ namespace SoftwareReliability
             double elpasedMilliseconds;
             startTime = DateTime.Now;
 
-            CoverageTest2(10000);
-            Console.ReadLine();
             //Build environment
-            Build("3o5");
+            Build("20bn");
             
             /*/print info
             Console.Write("Component Reliabilities: < ");
@@ -63,42 +61,95 @@ namespace SoftwareReliability
             //List<CorrelationPairs> issues = CorrelationCheck();
             //Console.WriteLine(correlations_matrix.ToString());
 
-            FindReliability();
-            double S = Simulation(1000000);
-            Console.WriteLine("Simulation Estimate with 1,000 runs: " + S.ToString("#0.0000000000"));
+            int i = 0;
+            double S;
+            if (i == 0)
+            {    
+                FindReliability();
+            }
+            else
+            {
+                S = Simulation(1000000);
+                Console.WriteLine("Simulation Estimate with 1,000,000 runs: " + S.ToString("#0.0000000000"));
+            }
 
             //Hold Results on screen
             endTime = DateTime.Now;
             elpasedMilliseconds = ((TimeSpan)(endTime - startTime)).TotalMilliseconds;
-            Console.WriteLine("Task took " + elpasedMilliseconds.ToString("#0.00") + " ms.");           
+            Console.WriteLine("Task took " + elpasedMilliseconds.ToString("#0.00") + " ms.");          
         }
-        //Functions that need creating... Setup function: switch case to setup environment for each test case
-        //                                Run function: switch case to run appropriate example for each test case
         
+        //Exports current enviornment to a text file which includes: component reliabilities and correlations
+        static void ExportBuild(string file_name)
+        {
+            string path = @"Z:\" + file_name + ".txt";
+            string components = "{";
+            string correlations_string = "{";
+            double [] correlations = correlations_matrix.ToColumnMajorArray();
+            //Start File
+            File.AppendAllLines(path, new [] {file_name + "Build", "Component Reliabilities:"});
+            //Loop through component reliabilities
+            for (int i = 0; i < component_reliabilities.Count(); i++)
+            {
+                if (i == component_reliabilities.Count() - 1)
+                    components += component_reliabilities[i].ToString("#0.00000") + " }";
+                else
+                    components += component_reliabilities[i].ToString("#0.00000") + ", ";
+            }
+            //Append components
+            File.AppendAllLines(path, new [] {components, "Correlations:"});
+            //Loop through correlations
+            for (int i = 0; i < correlations.Count(); i++)
+            {
+                if (i == correlations.Count() - 1)
+                    correlations_string += correlations[i].ToString("#0.00000") + " }";
+                else if (i % number == 0)
+                    correlations_string += correlations[i].ToString("#0.00000") + ",\n";
+                else
+                    correlations_string += correlations[i].ToString("#0.00000") + ", ";
+            }
+            //Append correlations
+            File.AppendAllLines(path, new [] {correlations_string});
+        }
+
+        //Function which uses a Random Number Generator and a data set to sample from the data set and generate a double within the bounds of the sample
+        static double PseudoSample(double[] data)
+        {
+            Random r = new Random();        //Random Number Generator to choose random correlations from the data set
+            int a;                          //Temp variable to hold random number between 1-162 (used in correlation generation)
+            double b1,b2,result;            //Temp variables to hold bounds for random number generation when generating correlations
+
+            a = r.Next(1,data.Count());      //Generate random number between 1-162
+            if (a != data.Count() - 1)       //If index does not overflow set b1 and b2 using increment
+            {
+                b1 = data[a];
+                b2 = data[a+1];
+            }
+            else                            //Else set b1 and b2 using decrement
+            {
+                b1 = data[a-1];
+                b2 = data[a];
+            }
+            result = r.NextDouble() * (b2-b1) + b1;    //Generate random double between b1 and b2
+            return result;
+        }
+
         //First Coverage Test Function which tests a 2o3 enviornment with random reliabilities and correlations within the theoretical bounds
-        static void CoverageTest1(int runs)
+        static void CoverageTest1(string system, int runs)
         {
             Random r = new Random();        //Random Number Generator to generate reliabilities
             int success = 0;                //Initialize success counter to zero
-            number = 3;                     //Number of components to generate
-            CS.Clear();                     //Clear any previous cutsets stored
-            PS.Clear();                     //Clear any previous pathsets stored
-            //Add cuts and paths for a 2o3 component system
-            CS.Add(new int[] {1,2});
-            CS.Add(new int[] {1,3});
-            CS.Add(new int[] {2,3});
-            PS.Add(new int[] {1,2});
-            PS.Add(new int[] {1,3});
-            PS.Add(new int[] {2,3});
+            Build(system);                  //Import cuts and paths of system as well as set number of components
 
             for (int i = 0; i < runs; i++)  //Loop for the appropriate number of test runs 
             {
+                Console.WriteLine(i);
                 Bm.Clear();                     //Clear B matrix and reinitialize the vector with 2 placeholders
                 Bm.Add(new double[] {0});
                 Bm.Add(new double[] {0});
-                GenerateComponents(0.01, 0.99); //Generate 3 random reliabilities
-                GenerateCorrelations();         //Generate correlations within the theoretical bounds
-                GenerateSigma();                //Generate Sigma values for use in B matrix
+                GenerateComponents(0.001, 0.999); //Generate n random reliabilities
+                GenerateCorrelations();           //Generate correlations within the theoretical bounds
+                GenerateSigma();                  //Generate Sigma values for use in B matrix
 
                 //Clear out list of previous conditional and total probability errors
                 ConditionalPErrors.Clear();
@@ -115,29 +166,17 @@ namespace SoftwareReliability
         }
 
         //Second Coverage test which tests a 2o3 enviornment sampling reliabilties from a beta distribution and sampling correlations from previous data set 
-        static void CoverageTest2(int runs)
+        static void CoverageTest2(string system, int runs, bool correction = true)
         {
-            Random r = new Random();        //Random Number Generator to choose random correlations from the data set
-            int switch_index = 0;           //Variable used in correlation assurance, 0 = c01, 1 = c02, 2 = c12
-            int a;                          //Temp variable to hold random number between 1-162 (used in correlation generation)
-            double b1,b2;                   //Temp variables to hold bounds for random number generation when generating correlations
-            double c01 = 0,c02 = 0,c12 = 0; //Temp variables to hold potential correlations while we perform tests 
-                                            //c01 = correlation between components 1 and 2  c02 = correlation between components 1 and 3  c12 = correlation between components 2 and 3
-            double[] correlations;          //Temp variable used in correlation matrix construction
+            bool fail = false;              //Fail flag for non-correction method
+            int r,c_index,sum = 0;          //Row index and correlations index used in transposing correaltions into the c array
+            double[] correlations;          //Generated correlation values
+            double[] c;                     //Temp variable used in correlation matrix construction
             int success = 0;                //Initialize success counter to zero
-            number = 3;                     //Number of components to generate
-            CS.Clear();                     //Clear any previous cutsets stored
-            PS.Clear();                     //Clear any previous pathsets stored
-            //Add cuts and paths for a 2o3 component system
-            CS.Add(new int[] {1,2});
-            CS.Add(new int[] {1,3});
-            CS.Add(new int[] {2,3});
-            PS.Add(new int[] {1,2});
-            PS.Add(new int[] {1,3});
-            PS.Add(new int[] {2,3});
+            Build(system);                  //Import cuts and paths of system as well as set number of components
             //Create Beta Distribution with alpha = 1000 and beta = 2, add 10,000 samples to double array and compute average
             Beta beta = new Beta(1000,2);
-            double[] samples = new double[3*runs];
+            double[] samples = new double[number*runs];
             beta.Samples(samples);
             double average = samples.Average(); 
             //Make sure average of beta distribution is within the bounds
@@ -148,68 +187,78 @@ namespace SoftwareReliability
             }
 
             //Correlation data set
-            double[] data_set = new double[] {0.00617284, 0.0123457, 0.0185185, 0.0246914, 0.0308642, 0.037037, 0.0432099, 0.0493827, 0.0555556, 0.0617284, 0.0679012, 0.0740741, 0.0802469, 0.0864198, 0.0925926, 0.0987654, 0.104938, 0.111111, 0.117284, 0.123457, 0.12963, 0.135802, 0.141975, 0.148148, 0.154321, 0.160494, 0.166667, 0.17284, 0.179012, 0.185185, 0.191358, 0.197531, 0.203704, 0.209877, 0.216049, 0.222222, 0.228395, 0.234568, 0.240741, 0.246914, 0.253086, 0.259259, 0.265432, 0.271605, 0.277778, 0.283951, 0.290123, 0.296296, 0.302469, 0.308642, 0.314815, 0.320988, 0.32716, 0.333333, 0.339506, 0.345679, 0.351852, 0.358025, 0.364198, 0.37037, 0.376543, 0.382716, 0.388889, 0.395062, 0.401235, 0.407407, 0.41358, 0.419753, 0.425926, 0.432099, 0.438272, 0.444444, 0.450617, 0.45679, 0.462963, 0.469136, 0.475309, 0.481481, 0.487654, 0.493827, 0.5, 0.506173, 0.512346, 0.518519, 0.524691, 0.530864, 0.537037, 0.54321, 0.549383, 0.555556, 0.561728, 0.567901, 0.574074, 0.580247, 0.58642, 0.592593, 0.598765, 0.604938, 0.611111, 0.617284, 0.623457, 0.62963, 0.635802, 0.641975, 0.648148, 0.654321, 0.660494, 0.666667, 0.67284, 0.679012, 0.685185, 0.691358, 0.697531, 0.703704, 0.709877, 0.716049, 0.722222, 0.728395, 0.734568, 0.740741, 0.746914, 0.753086, 0.759259, 0.765432, 0.771605, 0.777778, 0.783951, 0.790123, 0.796296, 0.802469, 0.808642, 0.814815, 0.820988, 0.82716, 0.833333, 0.839506, 0.845679, 0.851852, 0.858025, 0.864198, 0.87037, 0.876543, 0.882716, 0.888889, 0.895062, 0.901235, 0.907407, 0.91358, 0.919753, 0.925926, 0.932099, 0.938272, 0.944444, 0.950617, 0.95679, 0.962963, 0.969136, 0.975309, 0.981481, 0.987654, 0.993827, 1};
+            double[] data_set = new double[] {-0.000832051, -0.00077379, -0.000700997, -0.000556345, -0.000551149, -0.000546957, -0.00046025, -0.000377824, -0.000334054, -0.00032533, -0.00030337, -0.000289878, -0.000269457, -0.000250505, -0.000222839, -0.000216432, -0.000192773, -0.000172419, -0.000171405, -0.000150472, -0.00014154, -0.000139644, -0.000136932, -0.00013589, -0.000119422, -0.000118307, -0.000117407, -0.0000959645, -0.0000903688, -0.0000808274, -0.000078077, -0.0000753715, -0.0000717061, -0.0000698334, -0.0000678329, -0.000066352, -0.0000651196, -0.0000573269, -0.0000523427, -0.0000432869, -0.0000420424, -0.0000359503, -0.0000332959, -0.0000292295, -0.0000229813, -0.0000228065, -0.0000168529, -0.0000151666, -0.0000145606, -0.0000139291, -0.0000135653, -0.0000126496, -0.0000111359, -0.00000282844, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.0000193941, 0.000506082, 0.00114057, 0.00117882, 0.00171039, 0.00185772, 0.00209051, 0.00232217, 0.00238901, 0.0031334, 0.00338147, 0.00348186, 0.00396074, 0.00484534, 0.00636997, 0.00709894, 0.00750422, 0.011968, 0.0140486, 0.0187122, 0.0384815, 0.0503591, 0.0794512, 0.0862146, 0.0981174, 0.120224, 0.136748, 0.167731, 0.198908, 0.205563, 0.220539, 0.227669, 0.407697, 0.441613, 0.530991, 0.58726};
 
             for (int i = 0; i < runs; i++)  //Loop for the appropriate number of test runs 
             {
-                Bm.Clear();                     //Clear B matrix and reinitialize the vector with 2 placeholders
+                Console.WriteLine(i);
+                //Reinitalize fail flag for non-correction method
+                fail = false;
+                //Clear B matrix and reinitialize the vector with 2 placeholders
+                Bm.Clear();                     
                 Bm.Add(new double[] {0});
                 Bm.Add(new double[] {0});
-                //Add 3 samples as component reliabilities then generate correlation bounds
-                component_reliabilities = new double[] {samples[i], samples[i+1], samples[i+2]};
+                //Clear component reliabilities and correaltions then add n samples as component reliabilities 
+                component_reliabilities = new double[number];
+                for (int j = 0; j < number; j++)
+                    component_reliabilities[j] = samples[number*i+j];
+                //Generate correlation bounds
                 List<CorrelationPairs> bounds = CorrelationBounds();
-                //Continue generating correlations using data set as reference until all three correlations are within theoretical bounds
-                while(true)
+                correlations = new double[bounds.Count()];
+                //Continue generating correlations using data set as reference until all correlations are within theoretical bounds
+                if (correction)
                 {
-                    if (switch_index == 3)  //If all 3 correlations are within the bounds reset switch index and break loop
+                    for (int j = 0; j < bounds.Count(); j++)
                     {
-                        switch_index = 0;
-                        break;
-                    }
-
-                    a = r.Next(1,162);      //Generate random number between 1-162
-                    if (a != 161)           //If index does not overflow set b1 and b2 using increment
-                    {
-                        b1 = data_set[a];
-                        b2 = data_set[a+1];
-                    }
-                    else                    //Else set b1 and b2 using decrement
-                    {
-                        b1 = data_set[a-1];
-                        b2 = data_set[a];
-                    }
-                    //Switch case statement to determine which correlation we are currently checking, 0 = 12  1 = 13  2 = 23
-                    switch (switch_index)
-                    {
-                        case 0:
-                            c01 = r.NextDouble() * (b2-b1) + b1;    //Generate random double between b1 and b2
-                            //If c01 is within the bounds increment index otherwise repeat
-                            if ((c01 > bounds.Find(z => z.x == 0 && z.y == 1).min) && (c01 < bounds.Find(z => z.x == 0 && z.y == 1).max))
-                                switch_index++;
-                            break;
-                        case 1:
-                            c02 = r.NextDouble() * (b2-b1) + b1;    //Generate random double between b1 and b2
-                            //If c02 is within the bounds increment index otherwise repeat
-                            if ((c02 > bounds.Find(z => z.x == 0 && z.y == 2).min) && (c02 < bounds.Find(z => z.x == 0 && z.y == 2).max))
-                                switch_index++;
-                            break;
-                        case 2:
-                            c12 = r.NextDouble() * (b2-b1) + b1;    //Generate random double between b1 and b2
-                            //If c12 is within the bounds increment index otherwise repeat
-                            if ((c12 > bounds.Find(z => z.x == 1 && z.y == 2).min) && (c12 < bounds.Find(z => z.x == 1 && z.y == 2).max))
-                                switch_index++;
-                            break;
-                        default:
-                            Console.WriteLine("Error switch index = " + switch_index);
-                            return;
+                        //Generate correaltion value using data set, then repeat if outside theoretical bounds
+                        correlations[j] = PseudoSample(data_set);
+                        if (correlations[j] > bounds[j].max || correlations[j] < bounds[j].min)
+                            j--;
                     }
                 }
-                
+                //Otherwise generate correlations and fail iteration if a correlation is outside theoretical bounds
+                else
+                {
+                    for (int j = 0; j < bounds.Count(); j++)
+                    {
+                        correlations[j] = PseudoSample(data_set);
+                        if (correlations[j] > bounds[j].max || correlations[j] < bounds[j].min)
+                        {
+                            fail = true;
+                            break;
+                        }
+                    }
+                    if (fail)
+                        continue;
+                }
                 //Enter correlations into a double array then generate matrix
-                correlations = new double[] { 1.00, c01, c02,
-                                              c01, 1.00, c12,
-                                              c02, c12, 1.00};
-                correlations_matrix = Matrix<double>.Build.Dense(3,3,correlations);
+                c = new double[number*number];
+                r = 0;
+                c_index = 0;
+                for (int j = 0; j < number*number;)
+                {
+                    //Initialize summation
+                    sum = r-1;
+                    //Enter previous correlations at r > k
+                    for (int k = 0; k <  r; k++)
+                    {
+                        if(k == 0)
+                            c[j++] = correlations[r-1];
+                        else
+                        {
+                            c[j++] = correlations[(sum)+(number-k-1)];
+                            sum += (number - k - 1);
+                        }
+                    }
+                    //Enter correlation of 1 at r = k
+                    c[j++] = 1;
+                    //Enter new correlations at r < k
+                    while (j % number != 0)
+                        c[j++] = correlations[c_index++];
+                    //Increment row index
+                    r++;
+                }
+                correlations_matrix = Matrix<double>.Build.Dense(number,number,c);
                 GenerateSigma();    //Generate Sigma values for use in B matrix
 
                 //Clear out list of previous conditional and total probability errors
@@ -222,7 +271,10 @@ namespace SoftwareReliability
                     success++;
             }
             double success_rate = (double)success / (double)runs;
-            Console.WriteLine("Coverage Test 2:\n" + success + " successful enumerations after " + runs + " test runs");
+            if (correction)
+                Console.WriteLine("Coverage Test 2 with Correction:\n" + success + " successful enumerations after " + runs + " test runs");
+            else
+                Console.WriteLine("Coverage Test 2 without Correction:\n" + success + " successful enumerations after " + runs + " test runs");
             Console.WriteLine("Success Rate: " + success_rate);
         }
 
@@ -259,8 +311,10 @@ namespace SoftwareReliability
                 case "2s":                      //2 component series
                     number = 2;
                     component_reliabilities = new double[] {0.8, 0.75};
-                    correlations = new double[] { 1.00, -0.28,
-                                                -0.28,  1.00};
+                    /* correlations = new double[] { 1.00, -0.28,
+                                                -0.28,  1.00}; */
+                    correlations = new double[] { 1.0000000, 0.1377770,
+                                                  0.1377770, 1.0000000};
                     correlations_matrix = Matrix<double>.Build.Dense(2,2,correlations);
                     GenerateSigma();
                     CS.Add(new int[] {1});
@@ -270,8 +324,10 @@ namespace SoftwareReliability
                 case "2p":                      //2 component parallel
                     number = 2;
                     component_reliabilities = new double[] {0.8, 0.75};
-                    correlations = new double[] { 1.00, -0.28,
-                                                -0.28,  1.00};
+                    /* correlations = new double[] { 1.00, -0.28,
+                                                -0.28,  1.00}; */
+                    correlations = new double[] { 1.0000000, 0.1377770,
+                                                  0.1377770, 1.0000000};
                     correlations_matrix = Matrix<double>.Build.Dense(2,2,correlations);
                     GenerateSigma();
                     CS.Add(new int[] {1,2});
@@ -281,9 +337,12 @@ namespace SoftwareReliability
                 case "3s":                      //3 component series
                     number = 3;
                     component_reliabilities = new double[] {0.8, 0.75, 0.7};
-                    correlations = new double[] { 1.00, -0.28, 0.1,
+                    /* correlations = new double[] { 1.00, -0.28, 0.1,
                                                 -0.28,  1.00, 0.2,
-                                                0.1,   0.2,  1.00};
+                                                0.1,   0.2,  1.00}; */
+                    correlations = new double[] { 1.0000000, 0.1377770, 0.0326228,
+                                                  0.1377770, 1.0000000, 0.1108590,
+                                                  0.0326228, 0.1108590, 1.0000000};
                     correlations_matrix = Matrix<double>.Build.Dense(3,3,correlations);
                     GenerateSigma();
                     CS.Add(new int[] {1});
@@ -294,9 +353,12 @@ namespace SoftwareReliability
                 case "3p":                      //3 component parallel
                     number = 3;
                     component_reliabilities = new double[] {0.8, 0.75, 0.7};
-                    correlations = new double[] { 1.00, -0.28, 0.1,
+                    /* correlations = new double[] { 1.00, -0.28, 0.1,
                                                 -0.28,  1.00, 0.2,
-                                                0.1,   0.2,  1.00};
+                                                0.1,   0.2,  1.00}; */
+                    correlations = new double[] { 1.0000000, 0.1377770, 0.0326228,
+                                                  0.1377770, 1.0000000, 0.1108590,
+                                                  0.0326228, 0.1108590, 1.0000000};
                     correlations_matrix = Matrix<double>.Build.Dense(3,3,correlations);
                     GenerateSigma();
                     CS.Add(new int[] {1,2,3});
@@ -307,10 +369,14 @@ namespace SoftwareReliability
                 case "4s":                      //4 component series
                     number = 4;
                     component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72};
-                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15,
+                    /*correlations = new double[] { 1.00, -0.28,   0.1,-0.15,
                                                  -0.28,  1.00,   0.2, 0.30,
                                                    0.1,   0.2,  1.00, 0.32,
-                                                 -0.15,  0.30,  0.32, 1.00};
+                                                 -0.15,  0.30,  0.32, 1.00};*/
+                    correlations = new double[] { 1.0000000, 0.1377770, 0.0326228, 0.0719920,
+                                                  0.1377770, 1.0000000, 0.1108590, 0.0981194,
+                                                  0.0326228, 0.1108590, 1.0000000, 0.0873844,
+                                                  0.0719920, 0.0981194, 0.0873844, 1.0000000};
                     correlations_matrix = Matrix<double>.Build.Dense(4,4,correlations);
                     GenerateSigma();
                     CS.Add(new int[] {1});
@@ -322,10 +388,14 @@ namespace SoftwareReliability
                 case "4p":                      //4 component parallel
                     number = 4;
                     component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72};
-                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15,
+                    /*correlations = new double[] { 1.00, -0.28,   0.1,-0.15,
                                                  -0.28,  1.00,   0.2, 0.30,
                                                    0.1,   0.2,  1.00, 0.32,
-                                                 -0.15,  0.30,  0.32, 1.00};
+                                                 -0.15,  0.30,  0.32, 1.00};*/
+                    correlations = new double[] { 1.0000000, 0.1377770, 0.0326228, 0.0719920,
+                                                  0.1377770, 1.0000000, 0.1108590, 0.0981194,
+                                                  0.0326228, 0.1108590, 1.0000000, 0.0873844,
+                                                  0.0719920, 0.0981194, 0.0873844, 1.0000000};
                     correlations_matrix = Matrix<double>.Build.Dense(4,4,correlations);
                     GenerateSigma();
                     CS.Add(new int[] {1,2,3,4});
@@ -337,11 +407,16 @@ namespace SoftwareReliability
                 case "5s":                      //5 component series
                     number = 5;
                     component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73};
-                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15,
+                    /*correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15,
                                                  -0.28,  1.00,   0.2, 0.30,-0.15,
                                                    0.1,   0.2,  1.00, 0.32, 0.50,
                                                  -0.15,  0.30,  0.32, 1.00,-0.22,
-                                                  0.15, -0.15,  0.50,-0.22, 1.00};
+                                                  0.15, -0.15,  0.50,-0.22, 1.00};*/
+                    correlations = new double[] { 1.0000000, 0.1377770, 0.0326228, 0.0719920, -0.0486818,
+                                                  0.1377770, 1.0000000, 0.1108590, 0.0981194,  0.1800180,
+                                                  0.0326228, 0.1108590, 1.0000000, 0.0873844,  0.1303380,
+                                                  0.0719920, 0.0981194, 0.0873844, 1.0000000,  0.0248845,
+                                                 -0.0486818, 0.1800180, 0.1303380, 0.0248845,  1.0000000};
                     correlations_matrix = Matrix<double>.Build.Dense(5,5,correlations);
                     GenerateSigma();
                     CS.Add(new int[] {1});
@@ -354,11 +429,16 @@ namespace SoftwareReliability
                 case "5p":                      //5 component parallel 
                     number = 5;
                     component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73};
-                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15,
+                    /*correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15,
                                                  -0.28,  1.00,   0.2, 0.30,-0.15,
                                                    0.1,   0.2,  1.00, 0.32, 0.50,
                                                  -0.15,  0.30,  0.32, 1.00,-0.22,
-                                                  0.15, -0.15,  0.50,-0.22, 1.00};
+                                                  0.15, -0.15,  0.50,-0.22, 1.00};*/
+                    correlations = new double[] { 1.0000000, 0.1377770, 0.0326228, 0.0719920, -0.0486818,
+                                                  0.1377770, 1.0000000, 0.1108590, 0.0981194,  0.1800180,
+                                                  0.0326228, 0.1108590, 1.0000000, 0.0873844,  0.1303380,
+                                                  0.0719920, 0.0981194, 0.0873844, 1.0000000,  0.0248845,
+                                                 -0.0486818, 0.1800180, 0.1303380, 0.0248845,  1.0000000};
                     correlations_matrix = Matrix<double>.Build.Dense(5,5,correlations);
                     GenerateSigma();
                     CS.Add(new int[] {1,2,3,4,5});
@@ -371,12 +451,18 @@ namespace SoftwareReliability
                 case "6s":                      //6 component series 
                     number = 6;
                     component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73, 0.77};
-                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15, 0.05,
+                    /*correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15, 0.05,
                                                  -0.28,  1.00,   0.2, 0.30,-0.15,-0.20, 
                                                    0.1,   0.2,  1.00, 0.32, 0.50,-0.30, 
                                                  -0.15,  0.30,  0.32, 1.00,-0.22, 0.20, 
                                                   0.15, -0.15,  0.50,-0.22, 1.00, 0.25,
-                                                  0.05, -0.20, -0.30, 0.20, 0.25, 1.00};
+                                                  0.05, -0.20, -0.30, 0.20, 0.25, 1.00};*/
+                    correlations = new double[] { 1.0000000, 0.1377770, 0.0326228, 0.071992000, -0.04868180, 0.09131980, 
+                                                  0.1377770, 1.0000000, 0.1108590, 0.098119400,  0.18001800, 0.01634070, 
+                                                  0.0326228, 0.1108590, 1.0000000, 0.087384400,  0.13033800, 0.11618600, 
+                                                  0.0719920, 0.0981194, 0.0873844, 1.000000000,  0.02488450,-0.03212350, 
+                                                 -0.0486818, 0.1800180, 0.1303380, 0.024884500,  1.00000000,-0.00696747, 
+                                                  0.0913198, 0.0163407, 0.1161860,-0.032123500, -0.00696747, 1.00000000};
                     correlations_matrix = Matrix<double>.Build.Dense(6,6,correlations);
                     GenerateSigma();
                     PS.Add(new int[] {1,2,3,4,5,6});
@@ -390,12 +476,18 @@ namespace SoftwareReliability
                 case "6p":                      //6 component parallel 
                     number = 6;
                     component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73, 0.77};
-                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15, 0.05,
+                    /*correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15, 0.05,
                                                  -0.28,  1.00,   0.2, 0.30,-0.15,-0.20, 
                                                    0.1,   0.2,  1.00, 0.32, 0.50,-0.30, 
                                                  -0.15,  0.30,  0.32, 1.00,-0.22, 0.20, 
                                                   0.15, -0.15,  0.50,-0.22, 1.00, 0.25,
-                                                  0.05, -0.20, -0.30, 0.20, 0.25, 1.00};
+                                                  0.05, -0.20, -0.30, 0.20, 0.25, 1.00};*/
+                    correlations = new double[] { 1.0000000, 0.1377770, 0.0326228, 0.071992000, -0.04868180, 0.09131980, 
+                                                  0.1377770, 1.0000000, 0.1108590, 0.098119400,  0.18001800, 0.01634070, 
+                                                  0.0326228, 0.1108590, 1.0000000, 0.087384400,  0.13033800, 0.11618600, 
+                                                  0.0719920, 0.0981194, 0.0873844, 1.000000000,  0.02488450,-0.03212350, 
+                                                 -0.0486818, 0.1800180, 0.1303380, 0.024884500,  1.00000000,-0.00696747, 
+                                                  0.0913198, 0.0163407, 0.1161860,-0.032123500, -0.00696747, 1.00000000};
                     correlations_matrix = Matrix<double>.Build.Dense(6,6,correlations);
                     GenerateSigma();
                     CS.Add(new int[] {1,2,3,4,5,6});
@@ -409,13 +501,20 @@ namespace SoftwareReliability
                 case "7s":                      //7 component series 
                     number = 7;
                     component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73, 0.77, 0.67};
-                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15, 0.05,-0.23,
+                    /*correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15, 0.05,-0.23,
                                                  -0.28,  1.00,   0.2, 0.30,-0.15,-0.20, 0.16,
                                                    0.1,   0.2,  1.00, 0.32, 0.50,-0.30, 0.17,
                                                  -0.15,  0.30,  0.32, 1.00,-0.22, 0.20,-0.30, 
                                                   0.15, -0.15,  0.50,-0.22, 1.00, 0.25,-0.16,
                                                   0.05, -0.20, -0.30, 0.20, 0.25, 1.00, 0.27,
-                                                 -0.23,  0.16,  0.17,-0.30,-0.16, 0.27, 1.00};
+                                                 -0.23,  0.16,  0.17,-0.30,-0.16, 0.27, 1.00};*/
+                    correlations = new double[] { 1.0000000, 0.1377770, 0.0326228, 0.071992000, -0.04868180, 0.09131980, -0.066384200, 
+                                                  0.1377770, 1.0000000, 0.1108590, 0.098119400,  0.18001800, 0.01634070, -0.059739400, 
+                                                  0.0326228, 0.1108590, 1.0000000, 0.087384400,  0.13033800, 0.11618600, -0.056192500, 
+                                                  0.0719920, 0.0981194, 0.0873844, 1.000000000,  0.02488450,-0.03212350, -0.000253982, 
+                                                 -0.0486818, 0.1800180, 0.1303380, 0.024884500,  1.00000000,-0.00696747,  0.127017000, 
+                                                  0.0913198, 0.0163407, 0.1161860,-0.032123500, -0.00696747, 1.00000000,  0.014421100, 
+                                                 -0.0663842,-0.0597394,-0.0561925,-0.000253982,  0.12701700, 0.01442110,  1.000000000};
                     correlations_matrix = Matrix<double>.Build.Dense(7,7,correlations);
                     GenerateSigma();
                     PS.Add(new int[] {1,2,3,4,5,6,7});
@@ -430,13 +529,20 @@ namespace SoftwareReliability
                 case "7p":                      //7 component parallel 
                     number = 7;
                     component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73, 0.77, 0.67};
-                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15, 0.05,-0.23,
+                    /*correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15, 0.05,-0.23,
                                                  -0.28,  1.00,   0.2, 0.30,-0.15,-0.20, 0.16,
                                                    0.1,   0.2,  1.00, 0.32, 0.50,-0.30, 0.17,
                                                  -0.15,  0.30,  0.32, 1.00,-0.22, 0.20,-0.30, 
                                                   0.15, -0.15,  0.50,-0.22, 1.00, 0.25,-0.16,
                                                   0.05, -0.20, -0.30, 0.20, 0.25, 1.00, 0.27,
-                                                 -0.23,  0.16,  0.17,-0.30,-0.16, 0.27, 1.00};
+                                                 -0.23,  0.16,  0.17,-0.30,-0.16, 0.27, 1.00};*/
+                    correlations = new double[] { 1.0000000, 0.1377770, 0.0326228, 0.071992000, -0.04868180, 0.09131980, -0.066384200, 
+                                                  0.1377770, 1.0000000, 0.1108590, 0.098119400,  0.18001800, 0.01634070, -0.059739400, 
+                                                  0.0326228, 0.1108590, 1.0000000, 0.087384400,  0.13033800, 0.11618600, -0.056192500, 
+                                                  0.0719920, 0.0981194, 0.0873844, 1.000000000,  0.02488450,-0.03212350, -0.000253982, 
+                                                 -0.0486818, 0.1800180, 0.1303380, 0.024884500,  1.00000000,-0.00696747,  0.127017000, 
+                                                  0.0913198, 0.0163407, 0.1161860,-0.032123500, -0.00696747, 1.00000000,  0.014421100, 
+                                                 -0.0663842,-0.0597394,-0.0561925,-0.000253982,  0.12701700, 0.01442110,  1.000000000};
                     correlations_matrix = Matrix<double>.Build.Dense(7,7,correlations);
                     GenerateSigma();
                     CS.Add(new int[] {1,2,3,4,5,6,7});
@@ -451,14 +557,22 @@ namespace SoftwareReliability
                 case "8s":                      //8 component series 
                     number = 8;
                     component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73, 0.77, 0.67,0.5};
-                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15, 0.05,-0.23, 0.22,
+                    /* correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15, 0.05,-0.23, 0.22,
                                                  -0.28,  1.00,   0.2, 0.30,-0.15,-0.20, 0.16,-0.16,
                                                    0.1,   0.2,  1.00, 0.32, 0.50,-0.30, 0.17, 0.07,
                                                  -0.15,  0.30,  0.32, 1.00,-0.22, 0.20,-0.30, 0.25,
                                                   0.15, -0.15,  0.50,-0.22, 1.00, 0.25,-0.16, 0.10,
                                                   0.05, -0.20, -0.30, 0.20, 0.25, 1.00, 0.27,-0.07,
                                                  -0.23,  0.16,  0.17,-0.30,-0.16, 0.27, 1.00, 0.35,
-                                                  0.22, -0.16,  0.07, 0.25, 0.10,-0.07, 0.35, 1.00};
+                                                  0.22, -0.16,  0.07, 0.25, 0.10,-0.07, 0.35, 1.00}; */
+                    correlations = new double[] { 1.0000000, 0.1377770, 0.0326228, 0.071992000, -0.04868180, 0.09131980, -0.066384200, 0.0178629,
+                                                  0.1377770, 1.0000000, 0.1108590, 0.098119400,  0.18001800, 0.01634070, -0.059739400,-0.0346766,
+                                                  0.0326228, 0.1108590, 1.0000000, 0.087384400,  0.13033800, 0.11618600, -0.056192500,-0.0402154,
+                                                  0.0719920, 0.0981194, 0.0873844, 1.000000000,  0.02488450,-0.03212350, -0.000253982, 0.0286271,
+                                                 -0.0486818, 0.1800180, 0.1303380, 0.024884500,  1.00000000,-0.00696747,  0.127017000,-0.0166433, 
+                                                  0.0913198, 0.0163407, 0.1161860,-0.032123500, -0.00696747, 1.00000000,  0.014421100,-0.0140690, 
+                                                 -0.0663842,-0.0597394,-0.0561925,-0.000253982,  0.12701700, 0.01442110,  1.000000000,-0.0305813,
+                                                  0.0178629,-0.0346766,-0.0402154, 0.028627100, -0.01664330, -0.0140690, -0.030581300, 1.0000000};
                     correlations_matrix = Matrix<double>.Build.Dense(8,8,correlations);
                     GenerateSigma();
                     PS.Add(new int[] {1,2,3,4,5,6,7,8});
@@ -474,14 +588,22 @@ namespace SoftwareReliability
                 case "8p":                      //8 component parallel 
                     number = 8;
                     component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73, 0.77, 0.67,0.5};
-                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15, 0.05,-0.23, 0.22,
+                    /* correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15, 0.05,-0.23, 0.22,
                                                  -0.28,  1.00,   0.2, 0.30,-0.15,-0.20, 0.16,-0.16,
                                                    0.1,   0.2,  1.00, 0.32, 0.50,-0.30, 0.17, 0.07,
                                                  -0.15,  0.30,  0.32, 1.00,-0.22, 0.20,-0.30, 0.25,
                                                   0.15, -0.15,  0.50,-0.22, 1.00, 0.25,-0.16, 0.10,
                                                   0.05, -0.20, -0.30, 0.20, 0.25, 1.00, 0.27,-0.07,
                                                  -0.23,  0.16,  0.17,-0.30,-0.16, 0.27, 1.00, 0.35,
-                                                  0.22, -0.16,  0.07, 0.25, 0.10,-0.07, 0.35, 1.00};
+                                                  0.22, -0.16,  0.07, 0.25, 0.10,-0.07, 0.35, 1.00};*/
+                    correlations = new double[] { 1.0000000, 0.1377770, 0.0326228, 0.071992000, -0.04868180, 0.09131980, -0.066384200, 0.0178629,
+                                                  0.1377770, 1.0000000, 0.1108590, 0.098119400,  0.18001800, 0.01634070, -0.059739400,-0.0346766,
+                                                  0.0326228, 0.1108590, 1.0000000, 0.087384400,  0.13033800, 0.11618600, -0.056192500,-0.0402154,
+                                                  0.0719920, 0.0981194, 0.0873844, 1.000000000,  0.02488450,-0.03212350, -0.000253982, 0.0286271,
+                                                 -0.0486818, 0.1800180, 0.1303380, 0.024884500,  1.00000000,-0.00696747,  0.127017000,-0.0166433, 
+                                                  0.0913198, 0.0163407, 0.1161860,-0.032123500, -0.00696747, 1.00000000,  0.014421100,-0.0140690, 
+                                                 -0.0663842,-0.0597394,-0.0561925,-0.000253982,  0.12701700, 0.01442110,  1.000000000,-0.0305813,
+                                                  0.0178629,-0.0346766,-0.0402154, 0.028627100, -0.01664330, -0.0140690, -0.030581300, 1.0000000};
                     correlations_matrix = Matrix<double>.Build.Dense(8,8,correlations);
                     GenerateSigma();
                     CS.Add(new int[] {1,2,3,4,5,6,7,8});
@@ -497,11 +619,16 @@ namespace SoftwareReliability
                 case "5bn":                     //5 component bridge network
                     number = 5;
                     component_reliabilities = new double[] {0.8, 0.75, 0.7, 0.72, 0.73};
-                    correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15,
+                    /*correlations = new double[] { 1.00, -0.28,   0.1,-0.15, 0.15,
                                                  -0.28,  1.00,   0.2, 0.30,-0.15,
                                                    0.1,   0.2,  1.00, 0.32, 0.50,
                                                  -0.15,  0.30,  0.32, 1.00,-0.22,
-                                                  0.15, -0.15,  0.50,-0.22, 1.00};
+                                                  0.15, -0.15,  0.50,-0.22, 1.00};*/
+                    correlations = new double[] { 1.0000000, 0.1377770, 0.0326228, 0.0719920, -0.0486818,
+                                                  0.1377770, 1.0000000, 0.1108590, 0.0981194,  0.1800180,
+                                                  0.0326228, 0.1108590, 1.0000000, 0.0873844,  0.1303380,
+                                                  0.0719920, 0.0981194, 0.0873844, 1.0000000,  0.0248845,
+                                                 -0.0486818, 0.1800180, 0.1303380, 0.0248845,  1.0000000};
                     correlations_matrix = Matrix<double>.Build.Dense(5,5,correlations);
                     GenerateSigma();
                     CS.Add(new int[] {1,2});
@@ -513,12 +640,115 @@ namespace SoftwareReliability
                     PS.Add(new int[] {2,5});
                     PS.Add(new int[] {1,3,5});
                     break;
+                case "10bn":                     //10 component bridge network
+                    number = 10;
+                    component_reliabilities = new double[] {0.97499, 0.99267, 0.97783, 0.95330, 0.95391, 0.95755, 0.97215, 0.98216, 0.99780, 0.99689};
+                    correlations = new double[] {1.00000, 0.03505, 0.06065, 0.04038, 0.06685, 0.03315, 0.06523, 0.04131, -0.00012, 0.01537,
+                                                    0.03505, 1.00000, 0.04604, 0.00359, 0.03011, 0.02811, 0.04971, 0.01770, 0.05030,
+                                                    0.01026, 0.06065, 0.04604, 1.00000, 0.01324, 0.04172, 0.05361, -0.00036, 0.04143,
+                                                    0.03017, 0.02362, 0.04038, 0.00359, 0.01324, 1.00000, 0.02539, 0.05066, 0.01900,
+                                                    0.05321, 0.00434, 0.01259, 0.06685, 0.03011, 0.04172, 0.02539, 1.00000, 0.09488,
+                                                    0.01285, 0.05671, 0.00744, -0.00002, 0.03315, 0.02811, 0.05361, 0.05066, 0.09488,
+                                                    1.00000, 0.00497, 0.00014, 0.01566, 0.01765, 0.06523, 0.04971, -0.00036, 0.01900,
+                                                    0.01285, 0.00497, 1.00000, 0.02312, 0.01378, 0.01076, 0.04131, 0.01770, 0.04143,
+                                                    0.05321, 0.05671, 0.00014, 0.02312, 1.00000, 0.02180, 0.02158, -0.00012, 0.05030,
+                                                    0.03017, 0.00434, 0.00744, 0.01566, 0.01378, 0.02180, 1.00000, 0.08048, 0.01537,
+                                                    0.01026, 0.02362, 0.01259, -0.00002, 0.01765, 0.01076, 0.02158, 0.08048, 1.00000};
+                    correlations_matrix = Matrix<double>.Build.Dense(10,10,correlations);
+                    GenerateSigma();
+                    CS.Add(new int[] {1,3}); CS.Add(new int[] {1,4}); CS.Add(new int[] {2,3}); CS.Add(new int[] {2,4});
+                    CS.Add(new int[] {7,9}); CS.Add(new int[] {7,10}); CS.Add(new int[] {8,9}); CS.Add(new int[] {8,10});
+                    CS.Add(new int[] {1,5,9}); CS.Add(new int[] {1,6,9}); CS.Add(new int[] {1,5,10}); CS.Add(new int[] {1,6,10});
+                    CS.Add(new int[] {2,5,9}); CS.Add(new int[] {2,6,9}); CS.Add(new int[] {2,5,10}); CS.Add(new int[] {2,6,10});
+                    CS.Add(new int[] {3,6,7}); CS.Add(new int[] {3,5,7}); CS.Add(new int[] {3,6,8}); CS.Add(new int[] {3,5,8});
+                    CS.Add(new int[] {4,6,7}); CS.Add(new int[] {4,5,7}); CS.Add(new int[] {4,6,8}); CS.Add(new int[] {4,5,8});
+
+                    PS.Add(new int[] {1,2,7,8});
+                    PS.Add(new int[] {3,4,9,10});
+                    PS.Add(new int[] {1,2,5,6,9,10});
+                    PS.Add(new int[] {3,4,6,5,7,8});
+                    break;
+                case "20bn":                     //20 component bridge network
+                    number = 20;
+                    component_reliabilities = new double[] {0.96166, 0.98371, 0.96786, 0.97608, 0.95177, 0.96956, 0.99830, 0.97229, 
+                    0.96720, 0.98829, 0.97603, 0.96054, 0.98679, 0.99279, 0.97152, 0.95646, 0.96767, 0.98632, 0.97210, 0.99855};
+                    correlations = new double[] {1.00000, 0.01477, 0.04543, -0.00060, 0.01613, 0.04260, 0.00018, 0.01548, 0.02258, 0.00666, 0.00835, 0.01386, 0.00335, 0.01451, 0.04165, 0.04061, 0.01109, 0.02162, 0.01295, 0.00284, 0.01477,
+                                                    1.00000, 0.03031, 0.00887, 0.01092, -0.00113, 0.01444, 0.01415, 0.00724, 0.02365, 0.00455, 0.02643, 0.04128, 0.01151, 0.02741, 0.00375, 0.00777, 0.02480, 0.03120, 0.00376, 0.04543,
+                                                    0.03031, 1.00000, 0.02775, 0.01510, 0.02799, 0.00847, 0.03712, 0.01322, 0.00403, 0.01615, 0.03089, 0.02642, 0.01666, 0.01649, 0.02856, 0.02703, 0.02585, 0.04178, 0.00318, -0.00060,
+                                                    0.00887, 0.02775, 1.00000, 0.00549, 0.00168, 0.01311, 0.00445, -0.00119, 0.02509, 0.02376, 0.00881, 0.02446, 0.00919, 0.04029, 0.02029, 0.04226, 0.01627, 0.01878, 0.00029, 0.01613,
+                                                    0.01092, 0.01510, 0.00549, 1.00000, -0.00179, 0.00036, 0.03469, 0.02953, 0.00148, 0.01384, 0.00341, 0.02131, 0.00912, 0.02561, 0.01730, 0.03398, 0.01956, 0.00426, 0.00279, 0.04260,
+                                                    -0.00113, 0.02799, 0.00168, -0.00179, 1.00000, 0.00626, 0.03953, 0.03992, 0.00054, 0.02060, 0.03603, 0.00387, 0.01541, 0.03211, 0.00250, 0.02332, 0.00368, 0.04473, 0.00274, 0.00018,
+                                                    0.01444, 0.00847, 0.01311, 0.00036, 0.00626, 1.00000, 0.00999, 0.00787, 0.00728, 0.00370, 0.00302, 0.01201, 0.01131, 0.01053, 0.00124, 0.00219, 0.01346, 0.01151, 0.00722, 0.01548,
+                                                    0.01415, 0.03712, 0.00445, 0.03469, 0.03953, 0.00999, 1.00000, 0.02754, 0.00958, 0.01456, 0.02618, 0.01659, 0.01263, 0.04884, 0.01196, 0.03365, 0.00445, 0.01899, 0.01059, 0.02258,
+                                                    0.00724, 0.01322, -0.00119, 0.02953, 0.03992, 0.00787, 0.02754, 1.00000, 0.00560, 0.03636, 0.01867, 0.00718, 0.01439, 0.02768, 0.01107, 0.00769, 0.01741, 0.03096, 0.01009, 0.00666,
+                                                    0.02365, 0.00403, 0.02509, 0.00148, 0.00054, 0.00728, 0.00958, 0.00560, 1.00000, -0.00071, 0.01417, 0.02012, 0.01846, 0.02824, 0.01682, 0.01957, 0.02819, 0.00820, 0.00927, 0.00835,
+                                                    0.00455, 0.01615, 0.02376, 0.01384, 0.02060, 0.00370, 0.01456, 0.03636, -0.00071, 1.00000, 0.02551, 0.01919, 0.00867, 0.01478, 0.01590, 0.04284, 0.02309, 0.04371, 0.01147, 0.01386,
+                                                    0.02643, 0.03089, 0.00881, 0.00341, 0.03603, 0.00302, 0.02618, 0.01867, 0.01417, 0.02551, 1.00000, 0.00137, 0.01141, 0.04193, 0.01561, 0.00326, 0.02356, -0.00011, 0.00571, 0.00335,
+                                                    0.04128, 0.02642, 0.02446, 0.02131, 0.00387, 0.01201, 0.01659, 0.00718, 0.02012, 0.01919, 0.00137, 1.00000, 0.01938, 0.02028, 0.01245, 0.02394, 0.02911, 0.03169, 0.00545, 0.01451,
+                                                    0.01151, 0.01666, 0.00919, 0.00912, 0.01541, 0.01131, 0.01263, 0.01439, 0.01846, 0.00867, 0.01141, 0.01938, 1.00000, 0.00769, 0.00112, 0.00074, 0.00083, 0.00185, 0.01466, 0.04165,
+                                                    0.02741, 0.01649, 0.04029, 0.02561, 0.03211, 0.01053, 0.04884, 0.02768, 0.02824, 0.01478, 0.04193, 0.02028, 0.00769, 1.00000, 0.00107, 0.02440, 0.00333, 0.01920, 0.00588, 0.04061,
+                                                    0.00375, 0.02856, 0.02029, 0.01730, 0.00250, 0.00124, 0.01196, 0.01107, 0.01682, 0.01590, 0.01561, 0.01245, 0.00112, 0.00107, 1.00000, 0.01275, 0.00160, 0.03603, 0.00124, 0.01109,
+                                                    0.00777, 0.02703, 0.04226, 0.03398, 0.02332, 0.00219, 0.03365, 0.00769, 0.01957, 0.04284, 0.00326, 0.02394, 0.00074, 0.02440, 0.01275, 1.00000, 0.01921, 0.03032, 0.00219, 0.02162,
+                                                    0.02480, 0.02585, 0.01627, 0.01956, 0.00368, 0.01346, 0.00445, 0.01741, 0.02819, 0.02309, 0.02356, 0.02911, 0.00083, 0.00333, 0.00160, 0.01921, 1.00000, 0.02096, 0.00958, 0.01295,
+                                                    0.03120, 0.04178, 0.01878, 0.00426, 0.04473, 0.01151, 0.01899, 0.03096, 0.00820, 0.04371, -0.00011, 0.03169, 0.00185, 0.01920, 0.03603, 0.03032, 0.02096, 1.00000, 0.00449, 0.00284,
+                                                    0.00376, 0.00318, 0.00029, 0.00279, 0.00274, 0.00722, 0.01059, 0.01009, 0.00927, 0.01147, 0.00571, 0.00545, 0.01466, 0.00588, 0.00124, 0.00219, 0.00958, 0.00449, 1.00000};
+                    correlations_matrix = Matrix<double>.Build.Dense(20,20,correlations);
+                    GenerateSigma();
+                    CS.Add(new int[] {1,5}); CS.Add(new int[] {1,6}); CS.Add(new int[] {1,7}); CS.Add(new int[] {1,8});
+                    CS.Add(new int[] {2,5}); CS.Add(new int[] {2,6}); CS.Add(new int[] {2,7}); CS.Add(new int[] {2,8});
+                    CS.Add(new int[] {3,5}); CS.Add(new int[] {3,6}); CS.Add(new int[] {3,7}); CS.Add(new int[] {3,8});
+                    CS.Add(new int[] {4,5}); CS.Add(new int[] {4,6}); CS.Add(new int[] {4,7}); CS.Add(new int[] {4,8});
+                    CS.Add(new int[] {16,17}); CS.Add(new int[] {16,18}); CS.Add(new int[] {16,19}); CS.Add(new int[] {16,20});
+                    CS.Add(new int[] {15,17}); CS.Add(new int[] {15,18}); CS.Add(new int[] {15,19}); CS.Add(new int[] {15,20});
+                    CS.Add(new int[] {14,17}); CS.Add(new int[] {14,18}); CS.Add(new int[] {14,19}); CS.Add(new int[] {14,20});
+                    CS.Add(new int[] {13,17}); CS.Add(new int[] {13,18}); CS.Add(new int[] {13,19}); CS.Add(new int[] {13,20});
+                    CS.Add(new int[] {1,9,17}); CS.Add(new int[] {1,9,18}); CS.Add(new int[] {1,9,19}); CS.Add(new int[] {1,9,20});
+                    CS.Add(new int[] {1,10,17}); CS.Add(new int[] {1,10,18}); CS.Add(new int[] {1,10,19}); CS.Add(new int[] {1,10,20});
+                    CS.Add(new int[] {1,11,17}); CS.Add(new int[] {1,11,18}); CS.Add(new int[] {1,11,19}); CS.Add(new int[] {1,11,20});
+                    CS.Add(new int[] {1,12,17}); CS.Add(new int[] {1,12,18}); CS.Add(new int[] {1,12,19}); CS.Add(new int[] {1,12,20});
+                    CS.Add(new int[] {5,9,13}); CS.Add(new int[] {5,9,14}); CS.Add(new int[] {5,9,15}); CS.Add(new int[] {5,9,16});
+                    CS.Add(new int[] {5,10,13}); CS.Add(new int[] {5,10,14}); CS.Add(new int[] {5,10,15}); CS.Add(new int[] {5,10,16});
+                    CS.Add(new int[] {5,11,13}); CS.Add(new int[] {5,11,14}); CS.Add(new int[] {5,11,15}); CS.Add(new int[] {5,11,16});
+                    CS.Add(new int[] {5,12,13}); CS.Add(new int[] {5,12,14}); CS.Add(new int[] {5,12,15}); CS.Add(new int[] {5,12,16});
+                    CS.Add(new int[] {2,9,17}); CS.Add(new int[] {2,9,18}); CS.Add(new int[] {2,9,19}); CS.Add(new int[] {2,9,20});
+                    CS.Add(new int[] {2,10,17}); CS.Add(new int[] {2,10,18}); CS.Add(new int[] {2,10,19}); CS.Add(new int[] {2,10,20});
+                    CS.Add(new int[] {2,11,17}); CS.Add(new int[] {2,11,18}); CS.Add(new int[] {2,11,19}); CS.Add(new int[] {2,11,20});
+                    CS.Add(new int[] {2,12,17}); CS.Add(new int[] {2,12,18}); CS.Add(new int[] {2,12,19}); CS.Add(new int[] {2,12,20});
+                    CS.Add(new int[] {6,9,13}); CS.Add(new int[] {6,9,14}); CS.Add(new int[] {6,9,15}); CS.Add(new int[] {6,9,16});
+                    CS.Add(new int[] {6,10,13}); CS.Add(new int[] {6,10,14}); CS.Add(new int[] {6,10,15}); CS.Add(new int[] {6,10,16});
+                    CS.Add(new int[] {6,11,13}); CS.Add(new int[] {6,11,14}); CS.Add(new int[] {6,11,15}); CS.Add(new int[] {6,11,16});
+                    CS.Add(new int[] {6,12,13}); CS.Add(new int[] {6,12,14}); CS.Add(new int[] {6,12,15}); CS.Add(new int[] {6,12,16});
+                    CS.Add(new int[] {3,9,17}); CS.Add(new int[] {3,9,18}); CS.Add(new int[] {3,9,19}); CS.Add(new int[] {3,9,20});
+                    CS.Add(new int[] {3,10,17}); CS.Add(new int[] {3,10,18}); CS.Add(new int[] {3,10,19}); CS.Add(new int[] {3,10,20});
+                    CS.Add(new int[] {3,11,17}); CS.Add(new int[] {3,11,18}); CS.Add(new int[] {3,11,19}); CS.Add(new int[] {3,11,20});
+                    CS.Add(new int[] {3,12,17}); CS.Add(new int[] {3,12,18}); CS.Add(new int[] {3,12,19}); CS.Add(new int[] {3,12,20});
+                    CS.Add(new int[] {4,9,17}); CS.Add(new int[] {4,9,18}); CS.Add(new int[] {4,9,19}); CS.Add(new int[] {4,9,20});
+                    CS.Add(new int[] {4,10,17}); CS.Add(new int[] {4,10,18}); CS.Add(new int[] {4,10,19}); CS.Add(new int[] {4,10,20});
+                    CS.Add(new int[] {4,11,17}); CS.Add(new int[] {4,11,18}); CS.Add(new int[] {4,11,19}); CS.Add(new int[] {4,11,20});
+                    CS.Add(new int[] {4,12,17}); CS.Add(new int[] {4,12,18}); CS.Add(new int[] {4,12,19}); CS.Add(new int[] {4,12,20});
+                    CS.Add(new int[] {7,9,13}); CS.Add(new int[] {7,9,14}); CS.Add(new int[] {7,9,15}); CS.Add(new int[] {7,9,16});
+                    CS.Add(new int[] {7,10,13}); CS.Add(new int[] {7,10,14}); CS.Add(new int[] {7,10,15}); CS.Add(new int[] {7,10,16});
+                    CS.Add(new int[] {7,11,13}); CS.Add(new int[] {7,11,14}); CS.Add(new int[] {7,11,15}); CS.Add(new int[] {7,11,16});
+                    CS.Add(new int[] {7,12,13}); CS.Add(new int[] {7,12,14}); CS.Add(new int[] {7,12,15}); CS.Add(new int[] {7,12,16});
+                    CS.Add(new int[] {8,9,13}); CS.Add(new int[] {8,9,14}); CS.Add(new int[] {8,9,15}); CS.Add(new int[] {8,9,16});
+                    CS.Add(new int[] {8,10,13}); CS.Add(new int[] {8,10,14}); CS.Add(new int[] {8,10,15}); CS.Add(new int[] {8,10,16});
+                    CS.Add(new int[] {8,11,13}); CS.Add(new int[] {8,11,14}); CS.Add(new int[] {8,11,15}); CS.Add(new int[] {8,11,16});
+                    CS.Add(new int[] {8,12,13}); CS.Add(new int[] {8,12,14}); CS.Add(new int[] {8,12,15}); CS.Add(new int[] {8,12,16});
+                    
+                    PS.Add(new int[] {1,2,3,4,13,14,15,16});
+                    PS.Add(new int[] {5,6,7,8,17,18,19,20});
+                    PS.Add(new int[] {1,2,3,4,9,10,11,12,17,18,19,20});
+                    PS.Add(new int[] {5,6,7,8,12,11,10,9,13,14,15,16});
+                    break;
                 case "2o3":
                     number = 3;
                     component_reliabilities = new double[] {0.8, 0.75, 0.7};
-                    correlations = new double[] { 1.00, -0.28, 0.1,
+                    /*correlations = new double[] { 1.00, -0.28, 0.1,
                                                 -0.28,  1.00, 0.2,
-                                                0.1,   0.2,  1.00};
+                                                0.1,   0.2,  1.00};*/
+                    correlations = new double[] { 1.0000000, 0.1377770, 0.0326228,
+                                                  0.1377770, 1.0000000, 0.1108590,
+                                                  0.0326228, 0.1108590, 1.0000000};
                     correlations_matrix = Matrix<double>.Build.Dense(3,3,correlations);
                     GenerateSigma();
                     CS.Add(new int[] {1,2});
@@ -583,8 +813,14 @@ namespace SoftwareReliability
                                                     0, 0, 0, 0, 1.00, 0, 0,
                                                     0, 0, 0, 0, 0, 1.00, 0,
                                                     0, 0, 0, 0, 0, 0, 1.00};*/
-                    //correlations_matrix = Matrix<double>.Build.Dense(7,7,correlations);
-                    GenerateCorrelations(0.2);
+                    correlations = new double[] { 1.0000000, 0.1377770, 0.0326228, 0.071992000, -0.04868180, 0.09131980, -0.066384200, 
+                                                  0.1377770, 1.0000000, 0.1108590, 0.098119400,  0.18001800, 0.01634070, -0.059739400, 
+                                                  0.0326228, 0.1108590, 1.0000000, 0.087384400,  0.13033800, 0.11618600, -0.056192500, 
+                                                  0.0719920, 0.0981194, 0.0873844, 1.000000000,  0.02488450,-0.03212350, -0.000253982, 
+                                                 -0.0486818, 0.1800180, 0.1303380, 0.024884500,  1.00000000,-0.00696747,  0.127017000, 
+                                                  0.0913198, 0.0163407, 0.1161860,-0.032123500, -0.00696747, 1.00000000,  0.014421100, 
+                                                 -0.0663842,-0.0597394,-0.0561925,-0.000253982,  0.12701700, 0.01442110,  1.000000000};
+                    correlations_matrix = Matrix<double>.Build.Dense(7,7,correlations);
                     GenerateSigma();
                     List<int[]> wolfram4 = new List<int[]>();
                     wolfram4.AddRange(new List<int[]> {new int[] {1, 1, 1, 1, 0, 0, 0}, 
@@ -892,7 +1128,7 @@ namespace SoftwareReliability
             List<PTrace> sim = new List<PTrace>();      //Simulation Graph
             List<PTrace> num = new List<PTrace>();      //Numerical Graph
             List<PTrace> err = new List<PTrace>();      //Difference between Simulation and Numerical Graph
-            //Generate_Bm();
+            Generate_Bm();
             //var pkey = Path.Concat(new List<int> {1}).ToArray(); //path key used in hashtable
             double choice;
             double condi;
@@ -950,6 +1186,8 @@ namespace SoftwareReliability
                 }
                 
             }
+            //Create Graphviz representations
+
             foreach (PTrace p in sim)
             {
                 p.prob = (double) p.count / (double) runs;
@@ -960,6 +1198,7 @@ namespace SoftwareReliability
                    // totals.Add(new PTrace(p.path, Math.Abs(p.prob - TotalProbability(Array.ConvertAll(p.path.ToArray(), c => (int) Char.GetNumericValue(c))))));
             }
             CreateDOTGraphs(sim,num,err);
+
             return (double) success / (double) runs; 
         }
 
@@ -1064,7 +1303,7 @@ namespace SoftwareReliability
                     R += TotalProbability(i);
                     //Console.WriteLine("Reliability \t= " + R.ToString("#0.0000000000") + "\n");
             }
-            //Console.WriteLine("Reliability \t= " + R.ToString("#0.0000000000"));
+            Console.WriteLine("Reliability \t= " + R.ToString("#0.0000000000"));
             return R;
         }
         //Recursive Dynamic Approach to Enumerating all possible states, defaults to only adding Full Path and not partial
