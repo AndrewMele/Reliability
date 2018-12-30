@@ -39,29 +39,10 @@ namespace SoftwareReliability
             startTime = DateTime.Now;
 
             //Build environment
-            Build("20bn");
+            Build("8p");
             
-            /*/print info
-            Console.Write("Component Reliabilities: < ");
-            foreach (double d in component_reliabilities)
-                Console.Write(d + " ");
-            Console.WriteLine(">\n");
-            Console.WriteLine("Correlations Matrix:");
-            double[] correlations_array = correlations_matrix.AsColumnMajorArray();
-            for (int i = 0; i < (number*number); i++)
-            {
-                if (i % number == 0)
-                    Console.WriteLine("");
-                Console.Write(correlations_array[i].ToString("#0.00000") + "  ");
-            }
-            Console.WriteLine("");*/
-            
-            //Execute run
-            //FindReliability();
-            //List<CorrelationPairs> issues = CorrelationCheck();
-            //Console.WriteLine(correlations_matrix.ToString());
 
-            int i = 0;
+            int i = 1;
             double S;
             if (i == 0)
             {    
@@ -76,7 +57,8 @@ namespace SoftwareReliability
             //Hold Results on screen
             endTime = DateTime.Now;
             elpasedMilliseconds = ((TimeSpan)(endTime - startTime)).TotalMilliseconds;
-            Console.WriteLine("Task took " + elpasedMilliseconds.ToString("#0.00") + " ms.");          
+            Console.WriteLine("Task took " + elpasedMilliseconds.ToString("#0.00") + " ms.");
+            //ExportBuild("22bn");         
         }
         
         //Exports current enviornment to a text file which includes: component reliabilities and correlations
@@ -740,6 +722,344 @@ namespace SoftwareReliability
                     PS.Add(new int[] {1,2,3,4,9,10,11,12,17,18,19,20});
                     PS.Add(new int[] {5,6,7,8,12,11,10,9,13,14,15,16});
                     break;
+                case "22bn":
+                    number = 22;
+                    component_reliabilities = new double[] {0.98671, 0.88780, 0.86846, 0.99231, 0.97476, 0.89183, 0.97980, 0.96316, 0.92800, 0.96436, 0.94459, 0.87680, 0.91635, 0.91582, 0.87922, 0.94138, 0.98290, 0.88984, 0.89236, 0.92153, 0.91587, 0.96817};
+                    correlations = new double [] {1.00000, -0.00025, 0.00105, 0.00169, 0.00447, 0.00174, 0.00568, 0.00415, 0.00210, 0.00452, 0.00172, 0.00302, 0.00064, 0.00354, -0.00029, 0.00453, 0.00511, 0.00077, 0.00143, 0.00368, 0.00116, 0.00107, -0.00025,
+                                                    1.00000, 0.00016, 0.00023, 0.00430, 0.00403, 0.00366, 0.00448, 0.00133, 0.00087, 0.00397, 0.00501, -0.00100, 0.00457, 0.00329, 0.00558, 0.00030, 0.00131, 0.00605, 0.00323, 0.00614, 0.00176, 0.00105,
+                                                    0.00016, 1.00000, 0.00214, -0.00048, 0.00015, 0.00355, 0.00218, -0.00042, 0.00140, 0.00408, 0.00210, 0.00452, -0.00019, 0.00801, 0.00544, 0.00001, 0.00798, 0.00113, 0.00126, 0.00019, 0.00282, 0.00169,
+                                                    0.00023, 0.00214, 1.00000, 0.00476, 0.00096, 0.00165, 0.00043, 0.00250, 0.00444, 0.00228, 0.00103, 0.00044, 0.00225, 0.00064, 0.00223, 0.00007, 0.00020, 0.00237, 0.00052, 0.00010, 0.00009, 0.00447,
+                                                    0.00430, -0.00048, 0.00476, 1.00000, 0.00455, 0.00864, 0.00684, 0.00240, 0.00457, 0.00618, 0.00425, 0.00228, 0.00035, 0.00296, 0.00156, 0.00752, 0.00427, 0.00438, 0.00258, 0.00418, 0.00774, 0.00174,
+                                                    0.00403, 0.00015, 0.00096, 0.00455, 1.00000, 0.00399, 0.00354, 0.00713, 0.00143, 0.00693, 0.00782, 0.00452, 0.00047, 0.00841, 0.00686, 0.00371, -0.00030, 0.00642, 0.00768, 0.00770, 0.00394, 0.00568,
+                                                    0.00366, 0.00355, 0.00165, 0.00864, 0.00399, 1.00000, 0.00118, 0.00122, 0.00115, 0.00480, 0.00128, 0.00416, 0.00138, 0.00007, 0.00166, 0.00756, 0.00375, 0.00052, 0.00119, 0.00397, 0.00307, 0.00415,
+                                                    0.00448, 0.00218, 0.00043, 0.00684, 0.00354, 0.00118, 1.00000, 0.00055, 0.00189, 0.00212, 0.00505, 0.00342, 0.00090, 0.00354, 0.00775, 0.00050, 0.00096, 0.00122, 0.00419, 0.00625, -0.00026, 0.00210,
+                                                    0.00133, -0.00042, 0.00250, 0.00240, 0.00713, 0.00122, 0.00055, 1.00000, 0.00239, 0.00366, 0.00569, 0.00308, 0.00053, 0.00538, 0.00569, 0.00130, 0.00779, 0.00316, 0.00007, 0.00236, 0.00487, 0.00452,
+                                                    0.00087, 0.00140, 0.00444, 0.00457, 0.00143, 0.00115, 0.00189, 0.00239, 1.00000, -0.00040, 0.00028, 0.00590, 0.00185, 0.00433, -0.00002, 0.00370, 0.00447, 0.00467, 0.00215, 0.00602, 0.00288, 0.00172,
+                                                    0.00397, 0.00408, 0.00228, 0.00618, 0.00693, 0.00480, 0.00212, 0.00366, -0.00040, 1.00000, 0.00330, 0.00347, 0.00189, -0.00033, 0.00512, 0.00035, 0.00093, 0.00213, 0.00044, 0.00745, 0.00244, 0.00302,
+                                                    0.00501, 0.00210, 0.00103, 0.00425, 0.00782, 0.00128, 0.00505, 0.00569, 0.00028, 0.00330, 1.00000, 0.00009, 0.00653, 0.00046, -0.00017, 0.00250, 0.00745, 0.00120, 0.00639, 0.00704, 0.00069, 0.00064,
+                                                    -0.00100, 0.00452, 0.00044, 0.00228, 0.00452, 0.00416, 0.00342, 0.00308, 0.00590, 0.00347, 0.00009, 1.00000, 0.00393, 0.00539, 0.00663, 0.00043, 0.00774, 0.00330, 0.00542, 0.00361, 0.00058, 0.00354,
+                                                    0.00457, -0.00019, 0.00225, 0.00035, 0.00047, 0.00138, 0.00090, 0.00053, 0.00185, 0.00189, 0.00653, 0.00393, 1.00000, 0.00383, -0.00001, 0.00360, -0.00048, 0.00449, 0.00195, 0.00301, 0.00108, -0.00029,
+                                                    0.00329, 0.00801, 0.00064, 0.00296, 0.00841, 0.00007, 0.00354, 0.00538, 0.00433, -0.00033, 0.00046, 0.00539, 0.00383, 1.00000, 0.00237, 0.00090, 0.00792, 0.00872, 0.00465, -0.00047, 0.00382, 0.00453,
+                                                    0.00558, 0.00544, 0.00223, 0.00156, 0.00686, 0.00166, 0.00775, 0.00569, -0.00002, 0.00512, -0.00017, 0.00663, -0.00001, 0.00237, 1.00000, 0.00416, 0.00327, 0.00470, 0.00814, 0.00652, -0.00031, 0.00511,
+                                                    0.00030, 0.00001, 0.00007, 0.00752, 0.00371, 0.00756, 0.00050, 0.00130, 0.00370, 0.00035, 0.00250, 0.00043, 0.00360, 0.00090, 0.00416, 1.00000, 0.00217, 0.00182, -0.00006, -0.00001, 0.00070, 0.00077,
+                                                    0.00131, 0.00798, 0.00020, 0.00427, -0.00030, 0.00375, 0.00096, 0.00779, 0.00447, 0.00093, 0.00745, 0.00774, -0.00048, 0.00792, 0.00327, 0.00217, 1.00000, 0.00741, 0.00346, 0.00766, 0.00308, 0.00143,
+                                                    0.00605, 0.00113, 0.00237, 0.00438, 0.00642, 0.00052, 0.00122, 0.00316, 0.00467, 0.00213, 0.00120, 0.00330, 0.00449, 0.00872, 0.00470, 0.00182, 0.00741, 1.00000, 0.00529, 0.00513, 0.00501, 0.00368,
+                                                    0.00323, 0.00126, 0.00052, 0.00258, 0.00768, 0.00119, 0.00419, 0.00007, 0.00215, 0.00044, 0.00639, 0.00542, 0.00195, 0.00465, 0.00814, -0.00006, 0.00346, 0.00529, 1.00000, 0.00916, 0.00220, 0.00116,
+                                                    0.00614, 0.00019, 0.00010, 0.00418, 0.00770, 0.00397, 0.00625, 0.00236, 0.00602, 0.00745, 0.00704, 0.00361, 0.00301, -0.00047, 0.00652, -0.00001, 0.00766, 0.00513, 0.00916, 1.00000, 0.00129, 0.00107,
+                                                    0.00176, 0.00282, 0.00009, 0.00774, 0.00394, 0.00307, -0.00026, 0.00487, 0.00288, 0.00244, 0.00069, 0.00058, 0.00108, 0.00382, -0.00031, 0.00070, 0.00308, 0.00501, 0.00220, 0.00129, 1.00000};
+                    correlations_matrix = Matrix<double>.Build.Dense(22,22,correlations);
+                    GenerateSigma();
+                    CS.Add(new int[] {1, 16});
+                    CS.Add(new int[] {1, 17}); CS.Add(new int[] {2, 16}); CS.Add(new int[] {2, 17}); CS.Add(new int[] {7, 22});                  CS.Add(new int[] {7, 21});
+                    CS.Add(new int[] {7, 20}); CS.Add(new int[] {6, 22}); CS.Add(new int[] {6, 21}); CS.Add(new int[] {6, 20});
+                    CS.Add(new int[] {5, 22});
+                    CS.Add(new int[] {5, 21});
+                    CS.Add(new int[] {5, 20});
+
+                    CS.Add(new int[] {1, 9, 18});
+                    CS.Add(new int[] {1, 8, 18});
+
+                    CS.Add(new int[] {2, 9, 18});
+                    CS.Add(new int[] {2, 8, 18});
+
+                    CS.Add(new int[] {1, 9, 19});
+                    CS.Add(new int[] {1, 8, 19});
+
+                    CS.Add(new int[] {2, 9, 19});
+                    CS.Add(new int[] {2, 8, 19});
+
+                    CS.Add(new int[] {1, 8, 13,15,20});
+                    CS.Add(new int[] {1, 8, 12,15,20});
+                    CS.Add(new int[] {1, 8, 11,15,20});
+                    CS.Add(new int[] {1, 8, 10,15,20});
+
+                    CS.Add(new int[] {1, 8, 13,14,20});
+                    CS.Add(new int[] {1, 8, 12,14,20});
+                    CS.Add(new int[] {1, 8, 11,14,20});
+                    CS.Add(new int[] {1, 8, 10,14,20});
+
+                    CS.Add(new int[] {1, 8, 13,15,21});
+                    CS.Add(new int[] {1, 8, 12,15,21});
+                    CS.Add(new int[] {1, 8, 11,15,21});
+                    CS.Add(new int[] {1, 8, 10,15,21});
+
+                    CS.Add(new int[] {1, 8, 13,14,21});
+                    CS.Add(new int[] {1, 8, 12,14,21});
+                    CS.Add(new int[] {1, 8, 11,14,21});
+                    CS.Add(new int[] {1, 8, 10,14,21});
+
+                    CS.Add(new int[] {1, 8, 13,15,22});
+                    CS.Add(new int[] {1, 8, 12,15,22});
+                    CS.Add(new int[] {1, 8, 11,15,22});
+                    CS.Add(new int[] {1, 8, 10,15,22});
+
+                    CS.Add(new int[] {1, 8, 13,14,22});
+                    CS.Add(new int[] {1, 8, 12,14,22});
+                    CS.Add(new int[] {1, 8, 11,14,22});
+                    CS.Add(new int[] {1, 8, 10,14,22});
+
+                    CS.Add(new int[] {2, 8, 13,15,20});
+                    CS.Add(new int[] {2, 8, 12,15,20});
+                    CS.Add(new int[] {2, 8, 11,15,20});
+                    CS.Add(new int[] {2, 8, 10,15,20});
+
+                    CS.Add(new int[] {2, 8, 13,14,20});
+                    CS.Add(new int[] {2, 8, 12,14,20});
+                    CS.Add(new int[] {2, 8, 11,14,20});
+                    CS.Add(new int[] {2, 8, 10,14,20});
+
+                    CS.Add(new int[] {2, 8, 13,15,21});
+                    CS.Add(new int[] {2, 8, 12,15,21});
+                    CS.Add(new int[] {2, 8, 11,15,21});
+                    CS.Add(new int[] {2, 8, 10,15,21});
+
+                    CS.Add(new int[] {2, 8, 13,14,21});
+                    CS.Add(new int[] {2, 8, 12,14,21});
+                    CS.Add(new int[] {2, 8, 11,14,21});
+                    CS.Add(new int[] {2, 8, 10,14,21});
+
+                    CS.Add(new int[] {2, 8, 13,15,22});
+                    CS.Add(new int[] {2, 8, 12,15,22});
+                    CS.Add(new int[] {2, 8, 11,15,22});
+                    CS.Add(new int[] {2, 8, 10,15,22});
+
+                    CS.Add(new int[] {2, 8, 13,14,22});
+                    CS.Add(new int[] {2, 8, 12,14,22});
+                    CS.Add(new int[] {2, 8, 11,14,22});
+                    CS.Add(new int[] {2, 8, 10,14,22});
+
+                    CS.Add(new int[] {2, 9, 13,15,20});
+                    CS.Add(new int[] {2, 9, 12,15,20});
+                    CS.Add(new int[] {2, 9, 11,15,20});
+                    CS.Add(new int[] {2, 9, 10,15,20});
+
+                    CS.Add(new int[] {2, 9, 13,14,20});
+                    CS.Add(new int[] {2, 9, 12,14,20});
+                    CS.Add(new int[] {2, 9, 11,14,20});
+                    CS.Add(new int[] {2, 9, 10,14,20});
+
+                    CS.Add(new int[] {2, 9, 13,15,21});
+                    CS.Add(new int[] {2, 9, 12,15,21});
+                    CS.Add(new int[] {2, 9, 11,15,21});
+                    CS.Add(new int[] {2, 9, 10,15,21});
+
+                    CS.Add(new int[] {2, 9, 13,14,21});
+                    CS.Add(new int[] {2, 9, 12,14,21});
+                    CS.Add(new int[] {2, 9, 11,14,21});
+                    CS.Add(new int[] {2, 9, 10,14,21});
+
+                    CS.Add(new int[] {2, 9, 13,15,22});
+                    CS.Add(new int[] {2, 9, 12,15,22});
+                    CS.Add(new int[] {2, 9, 11,15,22});
+                    CS.Add(new int[] {2, 9, 10,15,22});
+
+                    CS.Add(new int[] {2, 9, 13,14,22});
+                    CS.Add(new int[] {2,9, 12,14,22});
+                    CS.Add(new int[] {2, 9, 11,14,22});
+                    CS.Add(new int[] {2, 9, 10,14,22});
+
+                    CS.Add(new int[] {1, 9, 13,15,20});
+                    CS.Add(new int[] {1, 9, 12,15,20});
+                    CS.Add(new int[] {1, 9, 11,15,20});
+                    CS.Add(new int[] {1, 9, 10,15,20});
+
+                    CS.Add(new int[] {1, 9, 13,14,20});
+                    CS.Add(new int[] {1, 9, 12,14,20});
+                    CS.Add(new int[] {1, 9, 11,14,20});
+                    CS.Add(new int[] {1, 9, 10,14,20});
+
+                    CS.Add(new int[] {1, 9, 13,15,21});
+                    CS.Add(new int[] {1, 9, 12,15,21});
+                    CS.Add(new int[] {1, 9, 11,15,21});
+                    CS.Add(new int[] {1, 9, 10,15,21});
+
+                    CS.Add(new int[] {1, 9, 13,14,21});
+                    CS.Add(new int[] {1, 9, 12,14,21});
+                    CS.Add(new int[] {1, 9, 11,14,21});
+                    CS.Add(new int[] {1, 9, 10,14,21});
+
+                    CS.Add(new int[] {1, 9, 13,15,22});
+                    CS.Add(new int[] {1, 9, 12,15,22});
+                    CS.Add(new int[] {1, 9, 11,15,22});
+                    CS.Add(new int[] {1, 9, 10,15,22});
+
+                    CS.Add(new int[] {1, 9, 13,14,22});
+                    CS.Add(new int[] {1,9, 12,14,22});
+                    CS.Add(new int[] {1, 9, 11,14,22});
+                    CS.Add(new int[] {1, 9, 10,14,22});
+                    CS.Add(new int[] {3,14, 22});
+                    CS.Add(new int[] {3,14, 21});
+                    CS.Add(new int[] {3,14, 20});
+
+                    CS.Add(new int[] {4,14, 22});
+                    CS.Add(new int[] {4,14, 21});
+                    CS.Add(new int[] {4,14, 20});
+
+                    CS.Add(new int[] {3,15, 22});
+                    CS.Add(new int[] {3,15, 21});
+                    CS.Add(new int[] {3,15, 20});
+
+                    CS.Add(new int[] {4,15, 22});
+                    CS.Add(new int[] {4,15, 21});
+                    CS.Add(new int[] {4,15, 20});
+
+                    CS.Add(new int[] {7,15, 13,19});
+                    CS.Add(new int[] {6,15, 13,19});
+                    CS.Add(new int[] {5,15, 13,19});
+
+                    CS.Add(new int[] {7,14, 13,19});
+                    CS.Add(new int[] {6,14, 13,19});
+                    CS.Add(new int[] {5,14, 13,19});
+
+                    CS.Add(new int[] {7,15, 12,19});
+                    CS.Add(new int[] {6,15, 12,19});
+                    CS.Add(new int[] {5,15, 12,19});
+
+                    CS.Add(new int[] {7,15, 11,19});
+                    CS.Add(new int[] {6,15, 11,19});
+                    CS.Add(new int[] {5,15, 11,19});
+
+                    CS.Add(new int[] {7,15, 10,19});
+                    CS.Add(new int[] {6,15, 10,19});
+                    CS.Add(new int[] {5,15, 10,19});
+
+
+
+                    CS.Add(new int[] {7,14, 12,19});
+                    CS.Add(new int[] {6,14, 12,19});
+                    CS.Add(new int[] {5,14, 12,19});
+
+                    CS.Add(new int[] {7,14, 11,19});
+                    CS.Add(new int[] {6,14, 11,19});
+                    CS.Add(new int[] {5,14, 11,19});
+
+                    CS.Add(new int[] {7,14, 10,19});
+                    CS.Add(new int[] {6,14, 10,19});
+                    CS.Add(new int[] {5,14, 10,19});
+
+                    CS.Add(new int[] {7,15, 13,18});
+                    CS.Add(new int[] {6,15, 13,18});
+                    CS.Add(new int[] {5,15, 13,18});
+
+                    CS.Add(new int[] {7,14, 13,18});
+                    CS.Add(new int[] {6,14, 13,18});
+                    CS.Add(new int[] {5,14, 13,18});
+
+                    CS.Add(new int[] {7,15, 12,18});
+                    CS.Add(new int[] {6,15, 12,18});
+                    CS.Add(new int[] {5,15, 12,18});
+
+                    CS.Add(new int[] {7,15, 11,18});
+                    CS.Add(new int[] {6,15, 11,18});
+                    CS.Add(new int[] {5,15, 11,18});
+
+                    CS.Add(new int[] {7,15, 10,18});
+                    CS.Add(new int[] {6,15, 10,18});
+                    CS.Add(new int[] {5,15, 10,18});
+
+                    CS.Add(new int[] {7,14, 12,19});
+                    CS.Add(new int[] {6,14, 12,19});
+                    CS.Add(new int[] {5,14, 12,19});
+
+                    CS.Add(new int[] {7,14, 11,18});
+                    CS.Add(new int[] {6,14, 11,18});
+                    CS.Add(new int[] {5,14, 11,18});
+
+                    CS.Add(new int[] {7,14, 10,18});
+                    CS.Add(new int[] {6,14, 10,18});
+                    CS.Add(new int[] {5,14, 10,18});
+
+                    CS.Add(new int[] {3, 8,10, 16});
+                    CS.Add(new int[] {3, 8,11, 16});
+                    CS.Add(new int[] {3, 8,12, 16});
+                    CS.Add(new int[] {3, 8,13, 16});
+
+                    CS.Add(new int[] {3, 9,10, 16});
+                    CS.Add(new int[] {3, 9,11, 16});
+                    CS.Add(new int[] {3, 9,12, 16});
+                    CS.Add(new int[] {3, 9,13, 16});
+
+                    CS.Add(new int[] {4, 8,10, 16});
+                    CS.Add(new int[] {4, 8,11, 16});
+                    CS.Add(new int[] {4, 8,12, 16});
+                    CS.Add(new int[] {4, 8,13, 16});
+
+                    CS.Add(new int[] {4, 9,10, 16});
+                    CS.Add(new int[] {4, 9,11, 16});
+                    CS.Add(new int[] {4, 9,12, 16});
+                    CS.Add(new int[] {4, 9,13, 16});
+
+
+                    CS.Add(new int[] {3, 8,10, 17});
+                    CS.Add(new int[] {3, 8,11, 17});
+                    CS.Add(new int[] {3, 8,12, 17});
+                    CS.Add(new int[] {3, 8,13, 17});
+
+                    CS.Add(new int[] {3, 9,10, 17});
+                    CS.Add(new int[] {3, 9,11, 17});
+                    CS.Add(new int[] {3, 9,12, 17});
+                    CS.Add(new int[] {3, 9,13, 17});
+
+                    CS.Add(new int[] {4, 8,10, 17});
+                    CS.Add(new int[] {4, 8,11, 17});
+                    CS.Add(new int[] {4, 8,12, 17});
+                    CS.Add(new int[] {4, 8,13, 17});
+
+                    CS.Add(new int[] {4, 9,10, 17});
+                    CS.Add(new int[] {4, 9,11, 17});
+                    CS.Add(new int[] {4, 9,12, 17});
+                    CS.Add(new int[] {4, 9,13, 17});
+
+                    CS.Add(new int[] {3, 14, 20});
+                    CS.Add(new int[] {3, 14, 21});
+                    CS.Add(new int[] {3, 14, 22});
+
+                    CS.Add(new int[] {3, 15, 20});
+                    CS.Add(new int[] {3, 15, 21});
+                    CS.Add(new int[] {3, 15, 22});
+
+                    CS.Add(new int[] {4, 14, 20});
+                    CS.Add(new int[] {4, 14, 21});
+                    CS.Add(new int[] {4, 14, 22});
+
+                    CS.Add(new int[] {4, 15, 20});
+                    CS.Add(new int[] {4, 15, 21});
+                    CS.Add(new int[] {4, 15, 22});
+
+                    CS.Add(new int[] {3, 10, 18});
+                    CS.Add(new int[] {3, 11, 18});
+                    CS.Add(new int[] {3, 12, 18});
+                    CS.Add(new int[] {3, 13, 18});
+
+                    CS.Add(new int[] {4, 10, 18});
+                    CS.Add(new int[] {4, 11, 18});
+                    CS.Add(new int[] {4, 12, 18});
+                    CS.Add(new int[] {4, 13, 18});
+
+                    CS.Add(new int[] {3, 10, 19});
+                    CS.Add(new int[] {3, 11, 19});
+                    CS.Add(new int[] {3, 12, 19});
+                    CS.Add(new int[] {3, 13, 19});
+
+                    CS.Add(new int[] {4, 10, 19});
+                    CS.Add(new int[] {4, 11, 19});
+                    CS.Add(new int[] {4, 12, 19});
+                    CS.Add(new int[] {4, 13, 19});
+
+                    PS.Add(new int[] {1, 2, 3, 4, 5, 6, 7});
+                    PS.Add(new int[] {1, 2, 3, 4, 14, 15, 20, 21, 22});
+                    PS.Add(new int[] {1, 2, 5, 6, 7, 10, 11, 12, 13, 14, 15});
+                    PS.Add(new int[] {1, 2, 10, 11, 12, 13, 20, 21, 22});
+                    PS.Add(new int[] {1, 2, 8, 9, 18, 19, 20, 21, 22});
+                    PS.Add(new int[] {1, 2, 5, 6, 7, 8, 9, 14, 15, 18, 19});
+                    PS.Add(new int[] {3, 4, 5, 6, 7, 8, 9, 16, 17});
+                    PS.Add(new int[] {3, 4, 8, 9, 14, 15, 16, 17, 20, 21, 22});
+                    PS.Add(new int[] {8, 9, 10, 11, 12, 13, 16, 17, 20, 21, 22});
+                    PS.Add(new int[] {5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17});
+                    PS.Add(new int[] {3, 4, 5, 6, 7, 10, 11, 12, 13, 16, 17, 18, 19});
+                    PS.Add(new int[] {5, 6, 7, 14, 15, 16, 17, 18, 19});
+                    PS.Add(new int[] {16, 17, 18, 19, 20, 21, 22});
+                    break;
                 case "2o3":
                     number = 3;
                     component_reliabilities = new double[] {0.8, 0.75, 0.7};
@@ -1186,7 +1506,7 @@ namespace SoftwareReliability
                 }
                 
             }
-            //Create Graphviz representations
+            /* //Create Graphviz representations
 
             foreach (PTrace p in sim)
             {
@@ -1197,7 +1517,7 @@ namespace SoftwareReliability
                 //if (Math.Abs(p.prob - TotalProbability(Array.ConvertAll(p.path.ToArray(), c => (int) Char.GetNumericValue(c)))) > 0.001)
                    // totals.Add(new PTrace(p.path, Math.Abs(p.prob - TotalProbability(Array.ConvertAll(p.path.ToArray(), c => (int) Char.GetNumericValue(c))))));
             }
-            CreateDOTGraphs(sim,num,err);
+            CreateDOTGraphs(sim,num,err); */
 
             return (double) success / (double) runs; 
         }
