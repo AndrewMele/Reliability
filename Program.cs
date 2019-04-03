@@ -38,6 +38,8 @@ namespace SoftwareReliability
             double elpasedMilliseconds;
             startTime = DateTime.Now;
 
+           //CoverageTest2("3o5",100000);
+
             //Build environment
             Build("8p");
             
@@ -155,6 +157,8 @@ namespace SoftwareReliability
             double[] correlations;          //Generated correlation values
             double[] c;                     //Temp variable used in correlation matrix construction
             int success = 0;                //Initialize success counter to zero
+            double R = 0;
+            //string file_path = @"Z:\3o5Reliabilites.txt";
             Build(system);                  //Import cuts and paths of system as well as set number of components
             //Create Beta Distribution with alpha = 1000 and beta = 2, add 10,000 samples to double array and compute average
             Beta beta = new Beta(1000,2);
@@ -247,10 +251,13 @@ namespace SoftwareReliability
                 ConditionalPErrors.Clear();
                 TotalPErrors.Clear();
                 //Enumerate Tree
-                FindReliability();
+                R = FindReliability();
                 //Check to see if there were any errors when enumerating the tree, if there were no errors increment success
                 if (ConditionalPErrors.Count == 0 && TotalPErrors.Count == 0)
+                {
+                    //File.AppendAllLines(file_path, new [] {R.ToString("0.0000000000")});
                     success++;
+                }
             }
             double success_rate = (double)success / (double)runs;
             if (correction)
